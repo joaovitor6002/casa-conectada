@@ -1298,29 +1298,42 @@ def ler_identidade(alvo):
 
 
 def identificar_aparelho(alvo):
-    """Guarda no cadastro o serial (para achar a TV se o IP mudar) e o MAC (para ligar pela rede)."""
+    """Quando conecta numa TV: confere quem ela é pelo número de série (o "RG" da TV).
+    - Se esse número já é de um aparelho cadastrado, é ele: corrige o IP dele se mudou.
+    - Se é a primeira vez (o aparelho daquele IP ainda não tem número), guarda.
+    - Nunca troca o número de um aparelho que já tem outro: o IP pode ter ido pra outra TV."""
     info = ler_identidade(alvo)
     if not info:
         identificados.discard(alvo)  # tenta de novo na próxima conexão
         return
     ip = alvo.split(":")[0]
+    mudou_ip = None
     with trava_arquivos:
         lista = ler_json(ARQ_DISPOSITIVOS, [])
         mudou = False
-        for d in lista:
-            if d.get("ip") != ip:
-                continue
-            if info["serial"] and d.get("serial") != info["serial"]:
-                d["serial"] = info["serial"]
+        dono = next((d for d in lista if info["serial"] and d.get("serial") == info["serial"]), None)
+        if dono is None:
+            dono = next((d for d in lista if d.get("ip") == ip and not d.get("serial")), None)
+            if dono is not None and info["serial"]:
+                dono["serial"] = info["serial"]
                 mudou = True
-            if info["modelo"] and d.get("modelo") != info["modelo"]:
-                d["modelo"] = info["modelo"]
+        if dono is not None:
+            if dono.get("ip") != ip:
+                mudou_ip = f"{dono['nome']}: {dono.get('ip')} → {ip}"
+                fechar_shell(str(dono.get("ip")) + ":5555")
+                cache_apps.pop(dono["id"], None)
+                dono["ip"] = ip
                 mudou = True
-            if info["mac"] and not d.get("mac"):
-                d["mac"] = info["mac"]
+            if info["modelo"] and dono.get("modelo") != info["modelo"]:
+                dono["modelo"] = info["modelo"]
+                mudou = True
+            if info["mac"] and not dono.get("mac"):
+                dono["mac"] = info["mac"]
                 mudou = True
         if mudou:
             salvar_json(ARQ_DISPOSITIVOS, lista)
+    if mudou_ip:
+        registrar("servidor", "servidor", f"IP atualizado: {mudou_ip}", True)
 
 
 def procurar_tvs():

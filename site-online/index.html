@@ -256,6 +256,17 @@
     .fila-envio .linha span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .barra-progresso { height: 10px; background: #22325A; border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
     .barra-progresso div { height: 100%; width: 0; background: #FFD23F; transition: width 0.2s; }
+    /* Aba Servidores */
+    .grade-servidores { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .servidor-card { background: #1A2747; border: 1px solid #22325A; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .servidor-card.desligado { opacity: 0.75; }
+    .servidor-card .topo-srv { display: flex; align-items: center; gap: 12px; }
+    .servidor-card .topo-srv .ico { font-size: 34px; }
+    .servidor-card .topo-srv strong { font-size: 18px; display: block; }
+    .servidor-card .linha-botoes button { padding: 8px 12px; font-size: 14px; }
+    .etiqueta.principal { background: #FFD23F; color: #14213D; }
+    .etiqueta.recebe { background: #2E8B6E; }
+    .etiqueta.off { background: #8A3A3A; }
   </style>
 </head>
 <body>
@@ -694,6 +705,17 @@
           <p class="detalhe">Os arquivos ficam no servidor, na pasta da casa ou em "Recebidos" da pessoa, e qualquer um da casa consegue abrir pela aba Arquivos. Quem recebe ganha um aviso no 🔔.</p>
         </section>
 
+        <!-- Servidores -->
+        <section id="secServidores" class="escondido">
+          <h2 class="titulo-secao">Servidores</h2>
+          <p class="detalhe" style="margin-bottom:14px">Os computadores da casa que rodam o Casa Conectada. Eles trocam usuários, aparelhos e cenas entre si e o principal manda as atualizações.</p>
+          <div class="linha-botoes" style="margin-bottom:14px">
+            <button id="btnAtualizarServidores" class="cinza">↻ Atualizar</button>
+          </div>
+          <p id="avisoServidores" class="detalhe" style="min-height:20px;margin-bottom:10px"></p>
+          <div id="gradeServidores" class="grade-servidores"></div>
+        </section>
+
         <!-- Mais -->
         <section id="secMais" class="escondido">
           <h2 class="titulo-secao">Mais</h2>
@@ -702,6 +724,7 @@
             <button class="tile" id="btnConta"><span class="ico">👤</span>Minha conta<small>Foto, nome, e-mail e senha</small></button>
             <button class="tile" data-ir="historico"><span class="ico">🕘</span>Histórico<small>Tudo o que foi feito</small></button>
             <button class="tile so-admin" data-ir="usuarios"><span class="ico">👥</span>Usuários<small>Contas, aprovações, e-mail</small></button>
+            <button class="tile so-admin" data-ir="servidores"><span class="ico">🖥️</span>Servidores<small>Os computadores da casa</small></button>
             <button class="tile so-admin" data-ir="atualizacoes"><span class="ico">🔄</span>Atualizações<small>Versão e sincronização</small></button>
             <button class="tile" id="btnSair"><span class="ico">🚪</span>Sair<small>Desconectar desta conta</small></button>
           </div>
@@ -797,7 +820,7 @@
     const SECOES = {
       dispositivos: "secDispositivos", cenas: "secCenas", arquivos: "secArquivos",
       assistente: "secAssistente", historico: "secHistorico", usuarios: "secUsuarios",
-      atualizacoes: "secAtualizacoes", conta: "secConta", mais: "secMais", enviar: "secEnviar"
+      atualizacoes: "secAtualizacoes", conta: "secConta", mais: "secMais", enviar: "secEnviar", servidores: "secServidores"
     };
 
     // O site é servido pelo próprio servidor, então o endereço é o mesmo da página.
@@ -864,7 +887,7 @@
       pegar("secControle").classList.add("escondido");
       pegar("secComputador").classList.add("escondido");
       pegar(SECOES[nome]).classList.remove("escondido");
-      const doMais = ["mais", "assistente", "historico", "usuarios", "atualizacoes", "conta"].indexOf(nome) >= 0;
+      const doMais = ["mais", "assistente", "historico", "usuarios", "atualizacoes", "conta", "servidores"].indexOf(nome) >= 0;
       document.querySelectorAll(".aba").forEach(function (b) {
         const aba = b.getAttribute("data-aba");
         b.classList.toggle("ativa", aba === nome || (aba === "mais" && doMais));
@@ -879,6 +902,7 @@
       if (nome === "atualizacoes") carregarAtualizacoes();
       if (nome === "conta") carregarConta();
       if (nome === "enviar") abrirEnviar();
+      if (nome === "servidores") carregarServidores();
     }
 
     document.querySelectorAll(".aba").forEach(function (b) {
@@ -2127,6 +2151,80 @@
       pastaAtual = caminhoEnviado;
       mostrarAba("arquivos");
     });
+
+    // ---------- Aba Servidores ----------
+    async function carregarServidores() {
+      const grade = pegar("gradeServidores");
+      pegar("avisoServidores").textContent = "Perguntando aos servidores da casa...";
+      try {
+        const d = await api("/api/servidores");
+        grade.innerHTML = "";
+        pegar("avisoServidores").textContent = d.servidores.length === 1
+          ? "Só este servidor por enquanto. Os outros aparecem quando sincronizarem ou quando você cadastrar como aparelho do tipo Servidor." : "";
+        d.servidores.forEach(function (sv) {
+          const i = sv.info || {};
+          const card = criar("div", "servidor-card" + (sv.online ? "" : " desligado"));
+          const topo = criar("div", "topo-srv");
+          topo.appendChild(criar("span", "ico", sv.este ? "🏠" : "🖥️"));
+          const nomes = criar("div");
+          nomes.appendChild(criar("strong", "", (sv.nome || i.nome || sv.ip) + (sv.este ? " (este)" : "")));
+          const etiquetas = criar("div");
+          if (!sv.online) etiquetas.appendChild(criar("span", "etiqueta off", sv.problema === "versao_antiga" ? "Versão antiga" : sv.problema === "chave_diferente" ? "Chave diferente" : "Sem resposta"));
+          if (i.modo) etiquetas.appendChild(criar("span", "etiqueta " + (i.modo === "principal" ? "principal" : "recebe"), i.modo === "principal" ? "Principal" : "Recebe"));
+          if (i.versao) etiquetas.appendChild(criar("span", "etiqueta", "v" + i.versao));
+          etiquetas.firstChild && (etiquetas.firstChild.style.marginLeft = "0");
+          nomes.appendChild(etiquetas);
+          topo.appendChild(nomes);
+          card.appendChild(topo);
+
+          const caixa = criar("div", "info-aparelho");
+          cartaoInfo(caixa, sv.ip, i.sistema || "Endereço");
+          if (i.disco_livre_gb !== undefined) cartaoInfo(caixa, i.disco_livre_gb + " GB", "Livres de " + i.disco_total_gb + " GB");
+          if (i.bateria !== null && i.bateria !== undefined) cartaoInfo(caixa, i.bateria + "%", i.carregando ? "Bateria ⚡" : "Bateria");
+          if (i.ligado_ha_min !== null && i.ligado_ha_min !== undefined) {
+            const h = Math.floor(i.ligado_ha_min / 60);
+            cartaoInfo(caixa, h >= 24 ? Math.floor(h / 24) + " dias" : (h ? h + "h " : "") + (i.ligado_ha_min % 60) + "min", "Ligado há");
+          }
+          if (sv.ultima_sync) cartaoInfo(caixa, sv.ultima_sync.split(" ").pop(), sv.sem_contato ? "Última sincronização ⚠" : "Última sincronização");
+          card.appendChild(caixa);
+
+          const botoes = criar("div", "linha-botoes");
+          if (!sv.este) {
+            const abrir = criar("button", "cinza", "🌐 Abrir o site dele");
+            abrir.addEventListener("click", function () { window.open(sv.site, "_blank", "noopener"); });
+            botoes.appendChild(abrir);
+          }
+          if (sv.aparelho_id) {
+            const ctl = criar("button", "", "💻 Controlar");
+            ctl.addEventListener("click", function () {
+              const a = aparelhos.find(function (x) { return x.id === sv.aparelho_id; });
+              if (a) abrirComputador(a);
+            });
+            botoes.appendChild(ctl);
+          } else if (!sv.este && sv.online) {
+            const cad = criar("button", "cinza", "+ Cadastrar como aparelho");
+            cad.addEventListener("click", async function () {
+              try {
+                await postar("/api/dispositivos", { nome: i.nome || ("Servidor " + sv.ip), ip: sv.ip, tipo: "servidor" });
+                await carregarDispositivos();
+                carregarServidores();
+              } catch (erro) { pegar("avisoServidores").textContent = erro.message; }
+            });
+            botoes.appendChild(cad);
+          }
+          if (sv.este) {
+            const atu = criar("button", "cinza", "🔄 Atualizações");
+            atu.addEventListener("click", function () { mostrarAba("atualizacoes"); });
+            botoes.appendChild(atu);
+          }
+          if (sv.problema === "versao_antiga") card.appendChild(criar("p", "detalhe", "Esse servidor está numa versão antiga. Atualize ele (aba Atualizações do site dele) pra aparecer completo."));
+          if (sv.problema === "chave_diferente") card.appendChild(criar("p", "detalhe", "A segredo.key desse servidor é diferente da deste. Copie a segredo.key do principal pra pasta CasaConectada dele."));
+          card.appendChild(botoes);
+          grade.appendChild(card);
+        });
+      } catch (erro) { pegar("avisoServidores").textContent = erro.message; }
+    }
+    pegar("btnAtualizarServidores").addEventListener("click", carregarServidores);
 
     // ---------- Notificações (sininho) ----------
     const ICONE_AVISO = { arquivo: "📤", conta: "👤", servidor: "🖥️", atualizacao: "🔄", falha: "⚠️", seguranca: "🔒", info: "🔔" };

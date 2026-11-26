@@ -3433,6 +3433,54 @@ def acao_no_pc(id_disp):
     return jsonify({"ok": True, "resultado": resultado})
 
 
+# ---------- Aba Servidores: todos os computadores da casa com o Casa Conectada ----------
+def info_de_servidor(ip):
+    """Pergunta a um servidor da casa como ele está (pedido cifrado). None se não respondeu."""
+    if ip in ("127.0.0.1", ip_da_rede()):
+        return info_deste_pc()
+    try:
+        pedido = json.dumps({"acao": "info", "quem": "aba Servidores"}).encode()
+        resposta = json.loads(_postar_cifrado(f"http://{ip}:{PORTA}/api/sync/pc", pedido, 4).decode())
+        return resposta.get("resultado") if resposta.get("ok") else None
+    except urllib.error.HTTPError as erro:
+        return {"erro": "versao_antiga" if erro.code in (404, 405) else "chave_diferente"}
+    except (OSError, ValueError):
+        return None
+
+
+@app.route("/api/servidores")
+@exige_admin
+def listar_servidores():
+    eu = ip_da_rede()
+    cfg = config_atualiza()
+    aparelhos = {d.get("ip"): d for d in listar_dispositivos_salvos() if d.get("tipo") in ("servidor", "notebook")}
+    ips = [eu] + [ip for ip, d in aparelhos.items() if d.get("tipo") == "servidor" and ip != eu]
+    ips += [ip for ip in contatos_sync if ip not in ips]
+    origem = cfg.get("origem", "")
+    if origem:
+        ip_origem = origem.replace("http://", "").split(":")[0]
+        if ip_origem not in ips:
+            ips.append(ip_origem)
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        infos = list(pool.map(info_de_servidor, ips))
+    lista = []
+    for ip, info in zip(ips, infos):
+        aparelho = aparelhos.get(ip)
+        item = {"ip": ip, "este": ip == eu, "online": bool(info) and "erro" not in (info or {}),
+                "info": info if info and "erro" not in info else None,
+                "problema": (info or {}).get("erro", ""),
+                "aparelho_id": aparelho["id"] if aparelho else "", "nome": aparelho["nome"] if aparelho else "",
+                "site": f"http://{ip}:{PORTA}"}
+        if ip in contatos_sync:
+            item["ultima_sync"] = estado_sync["contatos"].get(ip, "")
+            item["sem_contato"] = contatos_sync[ip]["perdido"]
+        if ip != eu and origem and ip == origem.replace("http://", "").split(":")[0]:
+            item["ultima_sync"] = estado_sync.get("ultima", "")
+            item["sem_contato"] = falhas_sync["perdido"]
+        lista.append(item)
+    return jsonify({"servidores": lista, "eu": eu, "modo": cfg["modo"]})
+
+
 def ip_da_rede():
     """Só para mostrar no terminal o endereço para abrir em outros aparelhos."""
     try:

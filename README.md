@@ -34,6 +34,7 @@
 **Vários servidores, uma casa só**
 - O mesmo site roda em mais de um computador (ex.: um notebook novo e um antigo com Windows 7).
 - **Atualização automática**: o PC principal publica versões novas e os outros baixam, conferem a assinatura e se atualizam sozinhos.
+- **Aba Servidores**: cada computador da casa com o Casa Conectada, se está ligado, se é o principal ou recebe, versão, última sincronização, disco, bateria e há quanto tempo está ligado.
 - **Sincronização** de usuários, aparelhos, cenas, horários e notificações entre os servidores, cifrada com uma chave que só os servidores da casa têm. Se o principal cair, o outro assume os horários.
 
 **Outros**
@@ -99,7 +100,7 @@ Notebook antigo (Windows 7) ── mesmo servidor, recebe as versões novas sozi
 - [x] "Esqueci a senha" aceitando usuário ou e-mail
 - [x] Enviar arquivos do celular para os notebooks pelo site (tipo LocalSend)
 - [x] Controles próprios para cada tipo de aparelho: TV, celular, notebook e servidor
-- [ ] Aba "Servidores" com o estado de cada computador da casa
+- [x] Aba "Servidores" com o estado de cada computador da casa
 - [ ] Nuvem da casa: fotos, filmes (Jellyfin) e bloqueador de anúncios
 - [ ] Ativar o assistente de IA
 

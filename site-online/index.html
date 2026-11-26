@@ -219,17 +219,20 @@
     .aviso-item.nova p { color: white; font-weight: 600; }
     .aviso-item.nova { box-shadow: inset 3px 0 0 #FFD23F; }
     .aviso-item small { color: #8A96B5; font-size: 12px; }
+    .logo-topo { width: 32px; height: 32px; vertical-align: middle; margin-right: 10px; border-radius: 8px; }
+    .logo-login { width: 72px; height: 72px; display: block; margin: 0 auto 14px; }
+    .login h1 { text-align: center; }
   </style>
 </head>
 <body>
 
   <!-- TELA DE LOGIN -->
   <div id="telaLogin" class="login">
-    <h1>Casa Conectada</h1>
+    <img src="/icone-192.png" alt="" class="logo-login"><h1>Casa Conectada</h1>
     <input id="campoUsuario" placeholder="Usuário" autocomplete="username">
     <input id="campoSenha" type="password" placeholder="Senha" autocomplete="current-password">
     <button id="btnEntrar">Entrar</button>
-    <button id="btnEsqueci" class="link">Esqueci minha senha</button>
+    <button id="btnEsqueci" class="link" style="margin-left:14px">Esqueci minha senha</button>
     <button id="btnCriarConta" class="link" style="margin-left:14px">Criar conta</button>
     <p id="erroLogin" style="margin-top:12px"></p>
   </div>
@@ -278,7 +281,7 @@
     </div>
 
     <div class="barra">
-      <h1>🏠 Casa Conectada</h1>
+      <h1><img src="/icone-192.png" alt="" class="logo-topo">Casa Conectada</h1>
       <div class="direita">
         <button class="sino" id="btnSino" title="Notificações">🔔<span class="contador escondido" id="contadorSino">0</span></button>
         <span class="pilula" id="pilulaTopo"><span class="ponto"></span><span class="texto">Verificando...</span></span>

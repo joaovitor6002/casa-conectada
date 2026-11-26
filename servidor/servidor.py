@@ -122,7 +122,7 @@ TECLAS = {
     "SLEEP": 223,
     **{f"NUM_{n}": 7 + n for n in range(10)},
 }
-TIPOS = {"tv", "notebook", "celular", "outro"}
+TIPOS = {"tv", "notebook", "celular", "servidor", "outro"}
 TIPOS_PASSO = {"comando", "app", "texto", "mensagem", "esperar", "acordar"}
 PAPEIS = {"admin", "usuario"}
 NOME_USUARIO_RE = re.compile(r"^[a-z0-9_.-]{3,20}$")
@@ -148,7 +148,8 @@ HORA_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 PORTAS_STATUS = {
     "tv": [5555],
     "celular": [5555],
-    "notebook": [445, 135, 3389, 22],
+    "notebook": [5000, 445, 135, 3389, 22],
+    "servidor": [5000, 445, 135, 3389, 22],
     "outro": [5555, 80, 443, 22, 445],
 }
 
@@ -1536,8 +1537,14 @@ def listar_apps(aparelho):
         instalados = {l.strip()[8:] for l in todos.splitlines() if l.strip().startswith("package:")}
         pacotes |= {p for p in APPS_CONHECIDOS if p in instalados}
     pacotes = {p for p in pacotes if PACOTE_RE.match(p)}
+    bloqueados = set()
+    if aparelho.get("tipo") == "celular":
+        ok3, desativados, _ = adb_executar(aparelho, ["shell", "pm", "list", "packages", "-3", "-d"])
+        if ok3:
+            bloqueados = {l.strip()[8:] for l in desativados.splitlines() if l.strip().startswith("package:")}
+            pacotes |= {p for p in bloqueados if PACOTE_RE.match(p)}
     apps = sorted(
-        ({"pacote": p, "nome": rotulo_app(p)} for p in pacotes),
+        ({"pacote": p, "nome": rotulo_app(p), "bloqueado": p in bloqueados} for p in pacotes),
         key=lambda a: (a["pacote"] not in APPS_CONHECIDOS, a["nome"].lower()),
     )
     cache_apps[aparelho["id"]] = (time.time(), apps)
@@ -3203,6 +3210,227 @@ def laco_sync():
             estado_sync["mensagem"] = f"Erro na sincronização: {erro}"
         aviso_sync.wait(INTERVALO_SYNC)
         aviso_sync.clear()
+
+
+# ---------- Controles por tipo: celular e computador ----------
+import ctypes  # noqa: E402
+import platform  # noqa: E402
+
+
+@app.route("/api/dispositivos/<id_disp>/celular")
+@exige_login
+def info_celular(id_disp):
+    """Bateria, modelo e versão do Android do celular (pelo ADB)."""
+    aparelho = achar_dispositivo(id_disp)
+    if aparelho is None:
+        return jsonify({"erro": "dispositivo não cadastrado"}), 404
+    comando = ("dumpsys battery | grep -E 'level|status|AC powered|USB powered'; echo ===; "
+               "getprop ro.product.manufacturer; getprop ro.product.model; getprop ro.build.version.release")
+    ok, saida, codigo = adb_executar(aparelho, ["shell", comando])
+    if not ok:
+        return jsonify({"erro": saida or "O celular não respondeu"}), codigo
+    bateria, _, props = saida.partition("===")
+    info = {"bateria": None, "carregando": False}
+    for linha in bateria.splitlines():
+        chave, _, valor = linha.strip().partition(":")
+        valor = valor.strip()
+        if chave == "level" and valor.isdigit():
+            info["bateria"] = int(valor)
+        elif chave == "status":
+            info["carregando"] = valor == "2" or info["carregando"]
+        elif chave in ("AC powered", "USB powered") and valor == "true":
+            info["carregando"] = True
+    linhas = [l.strip() for l in props.strip().splitlines()]
+    while len(linhas) < 3:
+        linhas.append("")
+    info.update(fabricante=linhas[0][:30], modelo=linhas[1][:40], android=linhas[2][:10])
+    return jsonify(info)
+
+
+@app.route("/api/dispositivos/<id_disp>/tela")
+@exige_admin
+def tela_do_aparelho(id_disp):
+    """Tira um print da tela do celular/TV (só administrador)."""
+    aparelho = achar_dispositivo(id_disp)
+    if aparelho is None:
+        return jsonify({"erro": "dispositivo não cadastrado"}), 404
+    alvo = aparelho["ip"] + ":5555"
+    try:
+        with trava_do_aparelho(alvo):
+            if alvo not in conexoes and not conectar(alvo)[0]:
+                return jsonify({"erro": "O aparelho não respondeu"}), 502
+            r = subprocess.run([ADB, "-s", alvo, "exec-out", "screencap", "-p"], timeout=15,
+                               capture_output=True, creationflags=SEM_JANELA)
+    except (OSError, subprocess.TimeoutExpired):
+        return jsonify({"erro": "O aparelho demorou para responder"}), 504
+    if r.returncode != 0 or not r.stdout.startswith(b"\x89PNG"):
+        return jsonify({"erro": "Não consegui tirar o print (a tela está ligada?)"}), 502
+    registrar("site", request.usuario, f"Viu a tela de {aparelho['nome']}", True)
+    return app.response_class(r.stdout, mimetype="image/png", headers={"Cache-Control": "no-store"})
+
+
+@app.route("/api/dispositivos/<id_disp>/app/acao", methods=["POST"])
+@exige_login
+def acao_no_app(id_disp):
+    """Fechar (qualquer um) ou bloquear/desbloquear (só admin) um app do celular."""
+    aparelho = achar_dispositivo(id_disp)
+    if aparelho is None:
+        return jsonify({"erro": "dispositivo não cadastrado"}), 404
+    dados = request.get_json(silent=True) or {}
+    pacote, acao = str(dados.get("pacote", "")), dados.get("acao")
+    if not PACOTE_RE.match(pacote) or len(pacote) > 100:
+        return jsonify({"erro": "nome de app inválido"}), 400
+    comandos = {"fechar": ["am", "force-stop", pacote],
+                "bloquear": ["pm", "disable-user", "--user", "0", pacote],
+                "desbloquear": ["pm", "enable", pacote]}
+    if acao not in comandos:
+        return jsonify({"erro": "ação desconhecida"}), 400
+    if acao != "fechar" and request.papel != "admin":
+        return jsonify({"erro": "Só o administrador pode bloquear apps."}), 403
+    if acao == "bloquear":
+        ok, terceiros, codigo = adb_executar(aparelho, ["shell", "pm", "list", "packages", "-3"])
+        if not ok:
+            return jsonify({"erro": terceiros}), codigo
+        if f"package:{pacote}" not in terceiros.split():
+            return jsonify({"erro": "Por segurança, só dá pra bloquear apps que foram instalados (não os do sistema)."}), 400
+    ok, saida, codigo = adb_executar(aparelho, ["shell"] + comandos[acao])
+    if not ok or "Exception" in saida or "Error" in saida:
+        return jsonify({"erro": (saida or "O celular recusou").strip()[:200]}), codigo if not ok else 502
+    cache_apps.pop(aparelho["id"], None)
+    nomes = {"fechar": "Fechou", "bloquear": "Bloqueou", "desbloquear": "Desbloqueou"}
+    registrar("site", request.usuario, f"{nomes[acao]} {rotulo_app(pacote)} em {aparelho['nome']}", True)
+    return jsonify({"ok": True})
+
+
+class _Energia(ctypes.Structure):
+    _fields_ = [("ACLineStatus", ctypes.c_byte), ("BatteryFlag", ctypes.c_byte),
+                ("BatteryLifePercent", ctypes.c_byte), ("SystemStatusFlag", ctypes.c_byte),
+                ("BatteryLifeTime", ctypes.c_ulong), ("BatteryFullLifeTime", ctypes.c_ulong)]
+
+
+def info_deste_pc():
+    info = {"nome": platform.node(), "sistema": f"{platform.system()} {platform.release()}",
+            "versao": nome_versao(versao_local()), "modo": config_atualiza()["modo"],
+            "bateria": None, "carregando": None, "ligado_ha_min": None}
+    try:
+        uso = shutil.disk_usage(str(Path.home().anchor or "/"))
+        info["disco_livre_gb"] = round(uso.free / 1024 ** 3, 1)
+        info["disco_total_gb"] = round(uso.total / 1024 ** 3, 1)
+    except OSError:
+        pass
+    if sys.platform == "win32":
+        try:
+            e = _Energia()
+            if ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(e)):
+                pct = e.BatteryLifePercent & 0xFF
+                if pct != 255 and (e.BatteryFlag & 0xFF) != 128:  # 128 = sem bateria
+                    info["bateria"] = pct
+                    info["carregando"] = e.ACLineStatus == 1
+            ctypes.windll.kernel32.GetTickCount64.restype = ctypes.c_ulonglong
+            info["ligado_ha_min"] = int(ctypes.windll.kernel32.GetTickCount64() // 60000)
+        except (AttributeError, OSError):
+            pass
+    return info
+
+
+def texto_popup(texto):
+    return re.sub(r"[\x00-\x1f\"'`$\\%^&|<>]", "", str(texto)).strip()[:150]
+
+
+def executar_no_pc(acao, texto=""):
+    """Roda uma ação NESTE computador. Devolve (ok, resultado)."""
+    if acao == "info":
+        return True, info_deste_pc()
+    if sys.platform != "win32":
+        return False, "Esse comando só funciona em computador com Windows."
+    aviso = "Casa Conectada: o computador vai {} em 1 minuto. Salve o que estiver fazendo."
+    comandos = {
+        "desligar": ["shutdown", "/s", "/t", "60", "/c", aviso.format("desligar")],
+        "reiniciar": ["shutdown", "/r", "/t", "60", "/c", aviso.format("reiniciar")],
+        "cancelar": ["shutdown", "/a"],
+    }
+    try:
+        if acao in comandos:
+            r = subprocess.run(comandos[acao], capture_output=True, text=True, timeout=10, creationflags=SEM_JANELA)
+            if r.returncode != 0 and acao != "cancelar":
+                return False, (r.stderr or r.stdout or "o Windows recusou").strip()[:200]
+            return True, "ok"
+        if acao == "bloquear":
+            ctypes.windll.user32.LockWorkStation()
+            return True, "ok"
+        if acao == "suspender":
+            def dormir():
+                time.sleep(2)
+                subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], creationflags=SEM_JANELA)
+            threading.Thread(target=dormir, daemon=True).start()
+            return True, "ok"
+        if acao == "mensagem":
+            t = texto_popup(texto)
+            if not t:
+                return False, "Mensagem vazia"
+            script = f'vbscript:Execute("CreateObject(""WScript.Shell"").Popup ""{t}"",60,""Casa Conectada"",64:close")'
+            subprocess.Popen(["mshta.exe", script])
+            return True, "ok"
+        if acao == "atualizar":
+            ok, msg = atualizar_agora("site")
+            return ok, msg
+    except (OSError, subprocess.TimeoutExpired) as erro:
+        return False, str(erro)
+    return False, "ação desconhecida"
+
+
+ACOES_PC = {"info", "bloquear", "suspender", "desligar", "reiniciar", "cancelar", "mensagem", "atualizar"}
+
+
+@app.route("/api/sync/pc", methods=["POST"])
+def rota_sync_pc():
+    """Outro servidor da casa pedindo uma ação neste computador (pedido cifrado com a chave da casa)."""
+    try:
+        pedido = json.loads(decifrar(request.get_data()).decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return jsonify({"erro": "recusado"}), 403
+    acao = pedido.get("acao")
+    if acao not in ACOES_PC:
+        return jsonify({"erro": "ação desconhecida"}), 400
+    ok, resultado = executar_no_pc(acao, pedido.get("texto", ""))
+    if acao != "info":
+        registrar("rede", str(pedido.get("quem", "outro servidor"))[:30], f"Computador: {acao}", ok,
+                  "" if ok else str(resultado))
+    resposta = json.dumps({"ok": ok, "resultado": resultado}).encode("utf-8")
+    return app.response_class(cifrar(resposta), mimetype="application/octet-stream")
+
+
+@app.route("/api/dispositivos/<id_disp>/pc", methods=["POST"])
+@exige_login
+def acao_no_pc(id_disp):
+    """Controla um notebook/servidor que tem o Casa Conectada instalado."""
+    aparelho = achar_dispositivo(id_disp)
+    if aparelho is None:
+        return jsonify({"erro": "dispositivo não cadastrado"}), 404
+    dados = request.get_json(silent=True) or {}
+    acao = dados.get("acao")
+    if acao not in ACOES_PC:
+        return jsonify({"erro": "ação desconhecida"}), 400
+    if acao not in ("info", "mensagem") and request.papel != "admin":
+        return jsonify({"erro": "Só o administrador pode fazer isso."}), 403
+    if aparelho["ip"] in ("127.0.0.1", ip_da_rede()):
+        ok, resultado = executar_no_pc(acao, dados.get("texto", ""))
+    else:
+        try:
+            pedido = json.dumps({"acao": acao, "texto": str(dados.get("texto", ""))[:150],
+                                 "quem": request.usuario}).encode()
+            resposta = json.loads(_postar_cifrado(f"http://{aparelho['ip']}:{PORTA}/api/sync/pc", pedido, 15).decode())
+            ok, resultado = resposta.get("ok"), resposta.get("resultado")
+        except urllib.error.HTTPError as erro:
+            return jsonify({"erro": "Esse computador tem o Casa Conectada, mas recusou o pedido "
+                                    f"({erro.code}): ele está numa versão antiga ou com outra chave."}), 502
+        except (OSError, ValueError):
+            return jsonify({"erro": "sem_agente"}), 502
+    if acao != "info":
+        registrar("site", request.usuario, f"{aparelho['nome']}: {acao}", bool(ok), "" if ok else str(resultado))
+    if not ok:
+        return jsonify({"erro": str(resultado)}), 502
+    return jsonify({"ok": True, "resultado": resultado})
 
 
 def ip_da_rede():

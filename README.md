@@ -16,6 +16,8 @@
 - Controle remoto completo das TVs Android pela rede (ADB, porta 5555): setas, volume, mídia, canais, teclado numérico, abrir apps, digitar e mostrar mensagens na tela.
 - Volume, mudo e desligar direto no card de cada aparelho, na tela inicial.
 - Ligar a TV desligada pela rede (Wake-on-LAN + comando de acordar).
+- **Celular Android** (ADB pela rede): bateria, modelo, bloquear/acordar a tela, ver a tela, abrir e fechar apps e bloquear apps instalados (controle dos pais).
+- **Notebooks e servidores** com o Casa Conectada instalado: ligar pela rede, bloquear a tela, suspender, reiniciar e desligar (com 1 minuto de aviso), mensagem na tela, bateria, disco livre e há quanto tempo está ligado. Os pedidos vão cifrados com a chave da casa.
 - **Procurar TVs na rede**: acha as TVs, diz qual é qual pelo número de série, corrige sozinho o IP de quem mudou e tem o botão "👀 Qual é?", que faz a TV se mostrar.
 
 **Automação**
@@ -96,7 +98,7 @@ Notebook antigo (Windows 7) ── mesmo servidor, recebe as versões novas sozi
 - [x] Ícone próprio do Casa Conectada
 - [x] "Esqueci a senha" aceitando usuário ou e-mail
 - [x] Enviar arquivos do celular para os notebooks pelo site (tipo LocalSend)
-- [ ] Controles próprios para cada tipo de aparelho: TV, celular, notebook e servidor
+- [x] Controles próprios para cada tipo de aparelho: TV, celular, notebook e servidor
 - [ ] Aba "Servidores" com o estado de cada computador da casa
 - [ ] Nuvem da casa: fotos, filmes (Jellyfin) e bloqueador de anúncios
 - [ ] Ativar o assistente de IA

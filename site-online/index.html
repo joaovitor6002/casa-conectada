@@ -71,6 +71,20 @@
     .banner.notebook { background: #2E8B6E; }
     .banner.celular { background: #B8456B; }
     .banner.outro { background: #6B5BA8; }
+    .banner.servidor { background: #8A5A2B; }
+    body.modo-celular .so-tv, body.modo-tv .so-celular { display: none !important; }
+    .info-aparelho { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .info-aparelho div { background: #22325A; border-radius: 12px; padding: 12px; }
+    .info-aparelho strong { display: block; font-size: 20px; color: #FFD23F; }
+    .info-aparelho span { color: #AEB9D6; font-size: 13px; }
+    .print-tela { max-width: 100%; max-height: 70vh; border-radius: 12px; margin-top: 12px; display: block; }
+    .print-tela.escondido { display: none; }
+    .app-item { background: #22325A; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .app-item strong { font-size: 14px; word-break: break-word; }
+    .app-item .linha-botoes button { padding: 6px 8px; font-size: 13px; }
+    .app-item.bloqueado { opacity: 0.6; }
+    .botoes-pc { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .botoes-pc button { padding: 16px 8px; }
     .corpo { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .corpo h3 { margin: 0; font-size: 18px; }
     .corpo button { margin-top: auto; }
@@ -351,6 +365,7 @@
               <option value="tv">TV</option>
               <option value="notebook">Notebook</option>
               <option value="celular">Celular</option>
+              <option value="servidor">Servidor (computador com o Casa Conectada)</option>
               <option value="outro">Outro</option>
             </select>
             <input id="macNovo" placeholder="MAC (opcional, para ligar pela rede)" autocomplete="off">
@@ -376,7 +391,17 @@
         <!-- Controle remoto -->
         <section id="secControle" class="escondido">
           <h2 class="titulo-secao" id="tituloControle">Controle</h2>
-          <div class="linha-botoes" style="margin-bottom:12px">
+          <div class="painel so-celular">
+            <div id="infoCelular" class="info-aparelho"></div>
+            <div class="linha-botoes">
+              <button data-cmd="SLEEP">🔒 Bloquear tela</button>
+              <button data-cmd="WAKEUP" class="cinza">☀️ Acordar</button>
+              <button id="btnVerTela" class="cinza so-admin">📸 Ver a tela</button>
+              <button id="btnAtualizarCelular" class="cinza">↻ Atualizar</button>
+            </div>
+            <img id="printTela" class="print-tela escondido" alt="Print da tela">
+          </div>
+          <div class="linha-botoes so-tv" style="margin-bottom:12px">
             <button id="btnLigarTV">⏻ Ligar</button>
             <button data-cmd="SLEEP" class="cinza">Desligar</button>
           </div>
@@ -396,7 +421,7 @@
           </div>
           <p class="detalhe" style="margin-top:6px">Dica: no computador, as setas do teclado, Enter e Backspace também controlam.</p>
 
-          <div class="painel">
+          <div class="painel so-tv">
             <h3>Mídia</h3>
             <div class="teclas">
               <button data-cmd="MEDIA_PREVIOUS">⏮ Anterior</button>
@@ -407,7 +432,7 @@
             </div>
           </div>
 
-          <div class="painel">
+          <div class="painel so-tv">
             <h3>Mais botões</h3>
             <div class="teclas">
               <button data-cmd="MENU">☰ Menu</button>
@@ -435,12 +460,12 @@
           <p id="aviso"></p>
 
           <div class="painel">
-            <h3>Mostrar mensagem na TV</h3>
+            <h3>Mostrar mensagem na tela</h3>
             <div class="linha-chat">
               <input id="campoMensagem" placeholder="Ex: O jantar está pronto!" maxlength="150" autocomplete="off">
               <button id="btnMensagem">Mostrar</button>
             </div>
-            <p class="detalhe" style="margin-top:8px">Aparece como aviso na tela da TV.</p>
+            <p class="detalhe" style="margin-top:8px">Aparece como aviso (notificação) na tela.</p>
           </div>
 
           <div class="painel">
@@ -453,12 +478,41 @@
           </div>
 
           <div class="painel">
-            <h3>Abrir app</h3>
-            <button id="btnCarregarApps" class="cinza">Mostrar apps desta TV</button>
+            <h3>Apps</h3>
+            <button id="btnCarregarApps" class="cinza">Mostrar apps</button>
+            <p class="detalhe so-celular" style="margin-top:8px">No celular dá pra abrir, fechar e (administrador) bloquear apps instalados. App bloqueado some da tela até ser desbloqueado.</p>
             <div id="gradeApps" class="grade-apps"></div>
           </div>
 
           <button id="btnVoltar" class="cinza">← Voltar ao início</button>
+        </section>
+
+        <!-- Controle de computador (notebook / servidor) -->
+        <section id="secComputador" class="escondido">
+          <h2 class="titulo-secao" id="tituloComputador">Computador</h2>
+          <div class="painel">
+            <div id="infoPc" class="info-aparelho"></div>
+            <p id="semAgente" class="detalhe escondido" style="margin-bottom:12px"></p>
+            <div class="botoes-pc">
+              <button id="pcLigar" class="cinza">⏻ Ligar pela rede</button>
+              <button data-pc="bloquear" class="cinza so-admin">🔒 Bloquear tela</button>
+              <button data-pc="suspender" class="cinza so-admin">💤 Suspender</button>
+              <button data-pc="reiniciar" class="cinza so-admin">🔄 Reiniciar</button>
+              <button data-pc="desligar" class="cinza so-admin">⏼ Desligar</button>
+              <button data-pc="cancelar" class="cinza so-admin">✖ Cancelar desligar</button>
+              <button data-pc="atualizar" id="pcAtualizar" class="cinza so-admin escondido">⬇ Atualizar o Casa Conectada</button>
+            </div>
+            <p class="detalhe" style="margin-top:10px">Desligar e reiniciar esperam 1 minuto e avisam na tela, dá tempo de cancelar.</p>
+          </div>
+          <div class="painel">
+            <h3>Mostrar mensagem na tela</h3>
+            <div class="linha-chat">
+              <input id="pcMensagem" placeholder="Ex: Hora de dormir!" maxlength="150" autocomplete="off">
+              <button id="pcBtnMensagem">Mostrar</button>
+            </div>
+          </div>
+          <p id="avisoPc" class="detalhe" style="min-height:22px"></p>
+          <button id="btnVoltarPc" class="cinza">← Voltar ao início</button>
         </section>
 
         <!-- Cenas e horários -->
@@ -727,8 +781,8 @@
   </div>
 
   <script>
-    const ICONES = { tv: "📺", notebook: "💻", celular: "📱", outro: "🔌" };
-    const NOMES_TIPO = { tv: "TV", notebook: "Notebook", celular: "Celular", outro: "Outro" };
+    const ICONES = { tv: "📺", notebook: "💻", celular: "📱", servidor: "🖥️", outro: "🔌" };
+    const NOMES_TIPO = { tv: "TV", notebook: "Notebook", celular: "Celular", servidor: "Servidor", outro: "Outro" };
     const ROTULO_TECLA = {
       POWER: "Ligar/Desligar", HOME: "Início", BACK: "Voltar", DPAD_UP: "↑", DPAD_DOWN: "↓",
       DPAD_LEFT: "←", DPAD_RIGHT: "→", DPAD_CENTER: "OK", VOLUME_UP: "Volume +", VOLUME_DOWN: "Volume −",
@@ -808,6 +862,7 @@
     function mostrarAba(nome) {
       Object.keys(SECOES).forEach(function (n) { pegar(SECOES[n]).classList.add("escondido"); });
       pegar("secControle").classList.add("escondido");
+      pegar("secComputador").classList.add("escondido");
       pegar(SECOES[nome]).classList.remove("escondido");
       const doMais = ["mais", "assistente", "historico", "usuarios", "atualizacoes", "conta"].indexOf(nome) >= 0;
       document.querySelectorAll(".aba").forEach(function (b) {
@@ -875,9 +930,14 @@
         elementosStatus[a.id] = { ponto: ponto, texto: texto };
         banner.appendChild(linhaStatus);
 
-        if (tipo !== "notebook") {
+        if (tipo === "notebook" || tipo === "servidor") {
+          const btnPc = criar("button", "", "💻 Controlar");
+          btnPc.addEventListener("click", function () { abrirComputador(a); });
+          corpo.appendChild(btnPc);
+        } else {
           const rapidas = criar("div", "acoes-rapidas");
-          [["🔉", "VOLUME_DOWN", "Volume −"], ["🔊", "VOLUME_UP", "Volume +"], ["🔇", "MUTE", "Mudo"], ["⏻", "SLEEP", "Desligar"]]
+          [["🔉", "VOLUME_DOWN", "Volume −"], ["🔊", "VOLUME_UP", "Volume +"], ["🔇", "MUTE", "Mudo"],
+           tipo === "celular" ? ["🔒", "SLEEP", "Bloquear a tela"] : ["⏻", "SLEEP", "Desligar"]]
             .forEach(function (b) {
               const botao = criar("button", "", b[0]);
               botao.title = b[2];
@@ -890,20 +950,12 @@
               rapidas.appendChild(botao);
             });
           corpo.appendChild(rapidas);
-          const btnControlar = criar("button", "", "🎮 Controle");
-          btnControlar.addEventListener("click", function () {
-            atual = a;
-            pegar("tituloControle").textContent = "Controle: " + a.nome;
-            pegar("aviso").textContent = "";
-            pegar("gradeApps").innerHTML = "";
-            pegar("secDispositivos").classList.add("escondido");
-            pegar("secControle").classList.remove("escondido");
-            postar("/api/comando/preparar", { id: a.id }).catch(function () {});
-          });
+          const btnControlar = criar("button", "", tipo === "celular" ? "📱 Controle" : "🎮 Controle");
+          btnControlar.addEventListener("click", function () { abrirControle(a); });
           corpo.appendChild(btnControlar);
         }
 
-        if (a.mac || tipo === "tv") {
+        if ((a.mac || tipo === "tv") && tipo !== "celular") {
           const btnLigar = criar("button", "cinza", "⏻ Ligar");
           btnLigar.addEventListener("click", async function () {
             pegar("avisoDisp").textContent = "Ligando " + a.nome + "... (pode levar até 15 segundos)";
@@ -915,8 +967,6 @@
             }
           });
           corpo.appendChild(btnLigar);
-        } else if (tipo === "notebook") {
-          corpo.appendChild(criar("p", "detalhe", "Cadastre o MAC para poder ligar pela rede."));
         }
 
         const btnRemover = criar("button", "remover so-admin", "×");
@@ -1257,6 +1307,147 @@
     });
     pegar("campoTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") enviarTexto(); });
 
+    // ---------- Abrir o controle certo para cada tipo ----------
+    function abrirControle(a) {
+      atual = a;
+      const celular = a.tipo === "celular";
+      document.body.classList.toggle("modo-celular", celular);
+      document.body.classList.toggle("modo-tv", !celular);
+      pegar("tituloControle").textContent = (celular ? "📱 " : "📺 ") + a.nome;
+      pegar("aviso").textContent = "";
+      pegar("gradeApps").innerHTML = "";
+      pegar("printTela").classList.add("escondido");
+      Object.keys(SECOES).forEach(function (n) { pegar(SECOES[n]).classList.add("escondido"); });
+      pegar("secComputador").classList.add("escondido");
+      pegar("secControle").classList.remove("escondido");
+      window.scrollTo(0, 0);
+      postar("/api/comando/preparar", { id: a.id }).catch(function () {});
+      if (celular) carregarInfoCelular();
+    }
+    function cartaoInfo(caixa, valor, rotulo) {
+      const d = criar("div");
+      d.appendChild(criar("strong", "", valor));
+      d.appendChild(criar("span", "", rotulo));
+      caixa.appendChild(d);
+    }
+    async function carregarInfoCelular() {
+      const caixa = pegar("infoCelular");
+      caixa.innerHTML = "";
+      cartaoInfo(caixa, "…", "Conectando");
+      try {
+        const d = await api("/api/dispositivos/" + encodeURIComponent(atual.id) + "/celular");
+        caixa.innerHTML = "";
+        cartaoInfo(caixa, d.bateria === null ? "?" : d.bateria + "%", d.carregando ? "Bateria (carregando ⚡)" : "Bateria");
+        cartaoInfo(caixa, d.modelo || "?", d.fabricante || "Modelo");
+        cartaoInfo(caixa, d.android ? "Android " + d.android : "?", "Sistema");
+      } catch (erro) {
+        caixa.innerHTML = "";
+        cartaoInfo(caixa, "Sem resposta", "Confira se a depuração sem fio está ligada");
+      }
+    }
+    pegar("btnAtualizarCelular").addEventListener("click", carregarInfoCelular);
+    pegar("btnVerTela").addEventListener("click", async function () {
+      const b = pegar("btnVerTela");
+      b.disabled = true;
+      pegar("aviso").textContent = "Tirando print...";
+      try {
+        const r = await fetch(enderecoServidor + "/api/dispositivos/" + encodeURIComponent(atual.id) + "/tela",
+          { headers: { Authorization: "Bearer " + token } });
+        if (!r.ok) { let e = {}; try { e = await r.json(); } catch (x) { /* */ } throw new Error(e.erro || "Erro " + r.status); }
+        const img = pegar("printTela");
+        if (img.src.indexOf("blob:") === 0) URL.revokeObjectURL(img.src);
+        img.src = URL.createObjectURL(await r.blob());
+        img.classList.remove("escondido");
+        pegar("aviso").textContent = "";
+      } catch (erro) { pegar("aviso").textContent = erro.message; }
+      b.disabled = false;
+    });
+
+    // ---------- Computadores (notebook / servidor) ----------
+    let pcAtual = null;
+    function abrirComputador(a) {
+      pcAtual = a;
+      Object.keys(SECOES).forEach(function (n) { pegar(SECOES[n]).classList.add("escondido"); });
+      pegar("secControle").classList.add("escondido");
+      pegar("secComputador").classList.remove("escondido");
+      pegar("tituloComputador").textContent = ICONES[a.tipo] + " " + a.nome;
+      pegar("pcLigar").classList.toggle("escondido", !a.mac);
+      pegar("avisoPc").textContent = "";
+      window.scrollTo(0, 0);
+      carregarInfoPc();
+    }
+    async function carregarInfoPc() {
+      const caixa = pegar("infoPc");
+      caixa.innerHTML = "";
+      cartaoInfo(caixa, "…", "Conectando");
+      pegar("semAgente").classList.add("escondido");
+      try {
+        const r = await postar("/api/dispositivos/" + encodeURIComponent(pcAtual.id) + "/pc", { acao: "info" });
+        const d = r.resultado;
+        caixa.innerHTML = "";
+        cartaoInfo(caixa, d.nome || "?", d.sistema || "Computador");
+        if (d.bateria !== null && d.bateria !== undefined) cartaoInfo(caixa, d.bateria + "%", d.carregando ? "Bateria (na tomada ⚡)" : "Bateria");
+        if (d.disco_livre_gb !== undefined) cartaoInfo(caixa, d.disco_livre_gb + " GB", "Livres de " + d.disco_total_gb + " GB");
+        if (d.ligado_ha_min !== null && d.ligado_ha_min !== undefined) {
+          const h = Math.floor(d.ligado_ha_min / 60), m = d.ligado_ha_min % 60;
+          cartaoInfo(caixa, (h ? h + "h " : "") + m + "min", "Ligado há");
+        }
+        cartaoInfo(caixa, d.versao || "?", d.modo === "receber" ? "Casa Conectada (recebe)" : "Casa Conectada (principal)");
+        pegar("pcAtualizar").classList.toggle("escondido", d.modo !== "receber");
+        document.querySelectorAll("[data-pc]").forEach(function (b) { b.disabled = false; });
+      } catch (erro) {
+        caixa.innerHTML = "";
+        cartaoInfo(caixa, "Sem resposta", "Desligado ou sem o Casa Conectada");
+        pegar("semAgente").textContent = erro.message === "sem_agente"
+          ? "Não consegui falar com o Casa Conectada nesse computador. Ele está desligado, ou o Casa Conectada não está instalado/aberto nele. "
+            + "Pra controlar um notebook, instale o Casa Conectada nele (o pacote do Windows 7 serve pra qualquer Windows)."
+            + (pcAtual.mac ? " Se ele estiver desligado, use \"Ligar pela rede\"." : "")
+          : erro.message;
+        pegar("semAgente").classList.remove("escondido");
+        document.querySelectorAll("[data-pc]").forEach(function (b) { b.disabled = true; });
+      }
+    }
+    const NOMES_ACAO_PC = { bloquear: "Tela bloqueada", suspender: "Suspendendo", reiniciar: "Vai reiniciar em 1 minuto",
+      desligar: "Vai desligar em 1 minuto", cancelar: "Desligamento cancelado", atualizar: "Atualizando", mensagem: "Mensagem mostrada" };
+    async function acaoPc(acao, texto) {
+      pegar("avisoPc").textContent = "Enviando...";
+      try {
+        const r = await postar("/api/dispositivos/" + encodeURIComponent(pcAtual.id) + "/pc", { acao: acao, texto: texto || "" });
+        pegar("avisoPc").textContent = pcAtual.nome + ": " + (acao === "atualizar" ? r.resultado : NOMES_ACAO_PC[acao]) + ".";
+      } catch (erro) {
+        pegar("avisoPc").textContent = erro.message === "sem_agente" ? "Esse computador não respondeu." : erro.message;
+      }
+    }
+    document.querySelectorAll("[data-pc]").forEach(function (b) {
+      let armado = false;
+      b.addEventListener("click", function () {
+        const acao = b.getAttribute("data-pc");
+        if ((acao === "desligar" || acao === "reiniciar" || acao === "suspender") && !armado) {
+          armado = true;
+          const original = b.textContent;
+          b.textContent = "Confirmar?";
+          setTimeout(function () { armado = false; b.textContent = original; }, 4000);
+          return;
+        }
+        armado = false;
+        acaoPc(acao);
+      });
+    });
+    pegar("pcBtnMensagem").addEventListener("click", function () {
+      const t = pegar("pcMensagem").value.trim();
+      if (!t) return;
+      acaoPc("mensagem", t);
+      pegar("pcMensagem").value = "";
+    });
+    pegar("pcLigar").addEventListener("click", async function () {
+      pegar("avisoPc").textContent = "Mandando o sinal de ligar...";
+      try {
+        await postar("/api/acordar", { id: pcAtual.id });
+        pegar("avisoPc").textContent = "Sinal enviado. Se o computador aceitar ligar pela rede, ele liga em alguns segundos.";
+      } catch (erro) { pegar("avisoPc").textContent = erro.message; }
+    });
+    pegar("btnVoltarPc").addEventListener("click", function () { mostrarAba("dispositivos"); });
+
     pegar("btnCarregarApps").addEventListener("click", async function () {
       const grade = pegar("gradeApps");
       grade.innerHTML = "";
@@ -1264,6 +1455,7 @@
       try {
         const dados = await api("/api/dispositivos/" + encodeURIComponent(atual.id) + "/apps");
         pegar("aviso").textContent = dados.apps.length ? "" : "Nenhum app encontrado.";
+        if (atual.tipo === "celular") { desenharAppsCelular(dados.apps); return; }
         dados.apps.forEach(function (app) {
           const b = criar("button", "", app.nome);
           b.title = app.pacote;
@@ -1283,10 +1475,34 @@
       }
     });
 
-    pegar("btnVoltar").addEventListener("click", function () {
-      pegar("secControle").classList.add("escondido");
-      pegar("secDispositivos").classList.remove("escondido");
-    });
+    function desenharAppsCelular(apps) {
+      const grade = pegar("gradeApps");
+      apps.forEach(function (app) {
+        const item = criar("div", "app-item" + (app.bloqueado ? " bloqueado" : ""));
+        item.appendChild(criar("strong", "", (app.bloqueado ? "🚫 " : "") + app.nome));
+        const botoes = criar("div", "linha-botoes");
+        function botao(texto, classe, acao) {
+          const b = criar("button", classe, texto);
+          b.addEventListener("click", async function () {
+            pegar("aviso").textContent = "...";
+            try {
+              if (acao === "abrir") await postar("/api/app", { id: atual.id, pacote: app.pacote });
+              else await postar("/api/dispositivos/" + encodeURIComponent(atual.id) + "/app/acao", { pacote: app.pacote, acao: acao });
+              const feito = { abrir: "aberto", fechar: "fechado", bloquear: "bloqueado", desbloquear: "desbloqueado" }[acao];
+              pegar("aviso").textContent = app.nome + " " + feito + ".";
+              if (acao === "bloquear" || acao === "desbloquear") pegar("btnCarregarApps").click();
+            } catch (erro) { pegar("aviso").textContent = app.nome + ": " + erro.message; }
+          });
+          botoes.appendChild(b);
+        }
+        if (!app.bloqueado) { botao("Abrir", "", "abrir"); botao("Fechar", "cinza", "fechar"); }
+        botao(app.bloqueado ? "Desbloquear" : "Bloquear", "cinza so-admin", app.bloqueado ? "desbloquear" : "bloquear");
+        item.appendChild(botoes);
+        grade.appendChild(item);
+      });
+    }
+
+    pegar("btnVoltar").addEventListener("click", function () { mostrarAba("dispositivos"); });
 
     // ---------- Cenas ----------
     let passosNovaCena = [];

@@ -989,6 +989,65 @@ def marcar_notificacoes():
     return jsonify({"ok": True})
 
 
+# ---------- Enviar arquivos pra alguém (tipo LocalSend) ----------
+@app.route("/api/usuarios/nomes")
+@exige_login
+def nomes_dos_usuarios():
+    """Lista simples pra escolher pra quem mandar (qualquer usuário logado vê)."""
+    return jsonify({"usuarios": [
+        {"usuario": u, "nome": i.get("nome") or u, "foto_v": i.get("foto_v", 0)}
+        for u, i in sorted(ler_usuarios().items()) if not i.get("pendente")
+    ]})
+
+
+def pasta_de_recebidos(para):
+    """'' = pasta da casa; senão Recebidos/<usuario>. Cria se não existir. Devolve o caminho relativo."""
+    if not para:
+        return ""
+    if para not in ler_usuarios():
+        return None
+    relativo = f"Recebidos/{para}"
+    alvo = caminho_seguro(relativo)
+    if alvo is None:
+        return None
+    alvo.mkdir(parents=True, exist_ok=True)
+    return relativo
+
+
+@app.route("/api/enviar/preparar", methods=["POST"])
+@exige_login
+def preparar_envio():
+    para = str((request.get_json(silent=True) or {}).get("para", "")).strip().lower()
+    caminho = pasta_de_recebidos(para)
+    if caminho is None:
+        return jsonify({"erro": "Usuário não encontrado."}), 404
+    return jsonify({"caminho": caminho})
+
+
+@app.route("/api/enviar/aviso", methods=["POST"])
+@exige_login
+def aviso_de_envio():
+    dados = request.get_json(silent=True) or {}
+    para = str(dados.get("para", "")).strip().lower()
+    nomes = [str(n)[:60] for n in (dados.get("nomes") or [])][:50]
+    if not nomes:
+        return jsonify({"ok": True})
+    usuarios = ler_usuarios()
+    quem = usuarios.get(request.usuario, {}).get("nome") or request.usuario
+    qtd = len(nomes)
+    oque = "1 arquivo" if qtd == 1 else f"{qtd} arquivos"
+    lista = ", ".join(nomes[:3]) + ("…" if qtd > 3 else "")
+    if para and para in usuarios:
+        if para != request.usuario:
+            notificar(f"{quem} te mandou {oque}: {lista}", "arquivo", para, f"arquivos:Recebidos/{para}")
+        destino = usuarios[para].get("nome") or para
+    else:
+        notificar(f"{quem} colocou {oque} na pasta da casa: {lista}", "arquivo", "todos", "arquivos:")
+        destino = "pasta da casa"
+    registrar("site", request.usuario, f"Enviou {oque} para {destino}", True)
+    return jsonify({"ok": True})
+
+
 # ---------- Dispositivos ----------
 def ip_valido(texto):
     try:

@@ -36,6 +36,7 @@
 
 **Outros**
 - 🔔 Notificações: conta para aprovar, servidor que caiu ou voltou, atualização, tentativas erradas de login.
+- 📤 **Enviar arquivos** do celular pra alguém da casa (tipo LocalSend): escolhe a pessoa, manda várias fotos e vídeos com barra de progresso, e ela recebe um aviso no 🔔.
 - 📁 Arquivos compartilhados da casa (enviar, baixar, criar pastas).
 - 🤖 Assistente de IA (Claude, da Anthropic) que controla os aparelhos por conversa e voz. Já está pronto no código e só precisa de uma chave da API.
 - Funciona como app no celular (dá pra "Adicionar à tela de início").
@@ -94,7 +95,7 @@ Notebook antigo (Windows 7) ── mesmo servidor, recebe as versões novas sozi
 
 - [x] Ícone próprio do Casa Conectada
 - [x] "Esqueci a senha" aceitando usuário ou e-mail
-- [ ] Enviar arquivos do celular para os notebooks pelo site (tipo LocalSend)
+- [x] Enviar arquivos do celular para os notebooks pelo site (tipo LocalSend)
 - [ ] Controles próprios para cada tipo de aparelho: TV, celular, notebook e servidor
 - [ ] Aba "Servidores" com o estado de cada computador da casa
 - [ ] Nuvem da casa: fotos, filmes (Jellyfin) e bloqueador de anúncios

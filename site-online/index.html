@@ -197,6 +197,9 @@
       .menu .aba { flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 4px; flex: 1; align-items: center; }
       .menu .aba.ativa { background: transparent; color: #FFD23F; }
       .barra #nomeUsuario, .barra .pilula .texto { display: none; }
+      .barra h1 { font-size: 18px; }
+      .barra .direita { flex-wrap: nowrap; gap: 8px; }
+      .logo-topo { width: 28px; height: 28px; margin-right: 8px; }
       .quem { padding: 2px; }
       .ola h2 { font-size: 23px; }
       .grade { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
@@ -222,6 +225,23 @@
     .logo-topo { width: 32px; height: 32px; vertical-align: middle; margin-right: 10px; border-radius: 8px; }
     .logo-login { width: 72px; height: 72px; display: block; margin: 0 auto 14px; }
     .login h1 { text-align: center; }
+    /* Enviar arquivos */
+    .atalhos { display: flex; gap: 10px; flex-wrap: wrap; margin: -8px 0 24px; }
+    .atalho { background: #1A2747; color: white; border: 1px solid #2B3D6B; border-radius: 14px; padding: 12px 16px; font-size: 15px; }
+    .atalho:hover { background: #FFD23F; color: #14213D; }
+    .destinos { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .destino { display: flex; align-items: center; gap: 8px; background: #22325A; color: white; border-radius: 999px; padding: 6px 14px 6px 6px; font-weight: 600; border: 2px solid transparent; }
+    .destino .avatar { width: 32px; height: 32px; font-size: 14px; }
+    .destino.casa { padding-left: 14px; }
+    .destino.marcado { border-color: #FFD23F; background: #2B3D6B; }
+    .destino:hover { background: #2B3D6B; color: white; }
+    .area-soltar { border: 2px dashed #3A4B73; border-radius: 16px; padding: 30px 16px; text-align: center; cursor: pointer; margin-bottom: 14px; }
+    .area-soltar:hover, .area-soltar.sobre { border-color: #FFD23F; background: #1A2747; }
+    .area-soltar .ico { font-size: 40px; display: block; margin-bottom: 6px; }
+    .fila-envio .linha { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #22325A; }
+    .fila-envio .linha span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .barra-progresso { height: 10px; background: #22325A; border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
+    .barra-progresso div { height: 100%; width: 0; background: #FFD23F; transition: width 0.2s; }
   </style>
 </head>
 <body>
@@ -311,6 +331,10 @@
             <span>✨</span>
             <input id="campoIA" placeholder="Fale com a casa… ex: desliga a TV da sala" autocomplete="off">
             <button id="btnIA">Enviar</button>
+          </div>
+          <div class="atalhos">
+            <button class="atalho" id="btnAbrirEnviar">📤 Enviar arquivos</button>
+            <button class="atalho" data-ir="arquivos">📁 Ver arquivos</button>
           </div>
           <div class="cabecalho-secao"><h3>Cenas rápidas</h3></div>
           <div id="chipsCenas" class="chips"></div>
@@ -523,7 +547,8 @@
           <h2 class="titulo-secao">Arquivos compartilhados</h2>
           <p class="caminho" id="caminhoArquivos"></p>
           <div class="linha-botoes" style="margin-bottom:14px">
-            <button id="btnEnviarArquivo">⬆ Enviar arquivo</button>
+            <button id="btnEnviarPara">📤 Enviar pra alguém</button>
+            <button id="btnEnviarArquivo" class="cinza">⬆ Enviar aqui</button>
             <button id="btnNovaPasta" class="cinza">+ Nova pasta</button>
             <input type="file" id="campoArquivo" class="escondido" multiple>
           </div>
@@ -589,6 +614,32 @@
             <p id="avisoEmail" class="detalhe" style="min-height:20px;margin-top:10px"></p>
           </div>
         </section>
+        <!-- Enviar arquivos -->
+        <section id="secEnviar" class="escondido">
+          <h2 class="titulo-secao">Enviar arquivos</h2>
+          <div class="painel">
+            <h3>Pra quem?</h3>
+            <div id="destinosEnvio" class="destinos"></div>
+            <div id="areaSoltar" class="area-soltar">
+              <span class="ico">📷</span>
+              <strong>Toque para escolher fotos, vídeos ou arquivos</strong>
+              <p class="detalhe">No computador, também dá pra arrastar e soltar aqui.</p>
+            </div>
+            <input type="file" id="campoEnviar" class="escondido" multiple>
+            <div id="filaEnvio" class="fila-envio"></div>
+            <div id="progressoEnvio" class="escondido">
+              <div class="barra-progresso"><div id="barraEnvio"></div></div>
+              <p class="detalhe" id="textoProgresso"></p>
+            </div>
+            <div class="linha-botoes" style="margin-top:14px">
+              <button id="btnMandar" disabled>Enviar</button>
+              <button id="btnVerEnviados" class="cinza escondido">📁 Ver na pasta</button>
+            </div>
+            <p id="avisoEnvio" class="detalhe" style="min-height:20px;margin-top:10px"></p>
+          </div>
+          <p class="detalhe">Os arquivos ficam no servidor, na pasta da casa ou em "Recebidos" da pessoa, e qualquer um da casa consegue abrir pela aba Arquivos. Quem recebe ganha um aviso no 🔔.</p>
+        </section>
+
         <!-- Mais -->
         <section id="secMais" class="escondido">
           <h2 class="titulo-secao">Mais</h2>
@@ -692,7 +743,7 @@
     const SECOES = {
       dispositivos: "secDispositivos", cenas: "secCenas", arquivos: "secArquivos",
       assistente: "secAssistente", historico: "secHistorico", usuarios: "secUsuarios",
-      atualizacoes: "secAtualizacoes", conta: "secConta", mais: "secMais"
+      atualizacoes: "secAtualizacoes", conta: "secConta", mais: "secMais", enviar: "secEnviar"
     };
 
     // O site é servido pelo próprio servidor, então o endereço é o mesmo da página.
@@ -772,6 +823,7 @@
       if (nome === "usuarios") { carregarUsuarios(); carregarConfigEmail(); }
       if (nome === "atualizacoes") carregarAtualizacoes();
       if (nome === "conta") carregarConta();
+      if (nome === "enviar") abrirEnviar();
     }
 
     document.querySelectorAll(".aba").forEach(function (b) {
@@ -1716,12 +1768,152 @@
     }
     pegar("btnConta").addEventListener("click", function () { mostrarAba("conta"); });
     pegar("quemTopo").addEventListener("click", function () { mostrarAba("conta"); });
-    document.querySelectorAll(".tile[data-ir]").forEach(function (t) {
+    document.querySelectorAll(".tile[data-ir], .atalho[data-ir]").forEach(function (t) {
       t.addEventListener("click", function () { mostrarAba(t.getAttribute("data-ir")); });
     });
 
+    // ---------- Enviar arquivos pra alguém ----------
+    let destinoEnvio = "";
+    let arquivosEnvio = [];
+    let caminhoEnviado = "";
+    function tamanhoBonito(b) {
+      if (b < 1024 * 1024) return Math.max(1, Math.round(b / 1024)) + " KB";
+      if (b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toFixed(1).replace(".", ",") + " MB";
+      return (b / 1024 / 1024 / 1024).toFixed(2).replace(".", ",") + " GB";
+    }
+    async function abrirEnviar() {
+      pegar("avisoEnvio").textContent = "";
+      pegar("btnVerEnviados").classList.add("escondido");
+      const caixa = pegar("destinosEnvio");
+      caixa.innerHTML = "";
+      const casa = criar("button", "destino casa", "📁 Pasta da casa");
+      casa.dataset.para = "";
+      casa.dataset.nome = "a pasta da casa";
+      caixa.appendChild(casa);
+      try {
+        const d = await api("/api/usuarios/nomes");
+        d.usuarios.forEach(function (u) {
+          const b = criar("button", "destino");
+          b.dataset.para = u.usuario;
+          b.dataset.nome = u.nome;
+          const foto = criar("span", "avatar");
+          pintarAvatar(foto, u.usuario, u.nome, u.foto_v);
+          b.appendChild(foto);
+          b.appendChild(document.createTextNode(u.usuario === meuUsuario ? u.nome + " (eu)" : u.nome));
+          caixa.appendChild(b);
+        });
+      } catch (erro) { pegar("avisoEnvio").textContent = erro.message; }
+      caixa.querySelectorAll(".destino").forEach(function (b) {
+        b.classList.toggle("marcado", b.dataset.para === destinoEnvio);
+        b.addEventListener("click", function () {
+          destinoEnvio = b.dataset.para;
+          caixa.querySelectorAll(".destino").forEach(function (x) { x.classList.toggle("marcado", x === b); });
+        });
+      });
+      desenharFilaEnvio();
+    }
+    function desenharFilaEnvio() {
+      const fila = pegar("filaEnvio");
+      fila.innerHTML = "";
+      let total = 0;
+      arquivosEnvio.forEach(function (f) {
+        total += f.size;
+        const linha = criar("div", "linha");
+        linha.appendChild(criar("span", "", f.name));
+        linha.appendChild(criar("span", "detalhe", tamanhoBonito(f.size)));
+        fila.appendChild(linha);
+      });
+      if (arquivosEnvio.length) {
+        const resumo = criar("div", "linha");
+        resumo.appendChild(criar("strong", "", arquivosEnvio.length + (arquivosEnvio.length === 1 ? " arquivo" : " arquivos")));
+        resumo.appendChild(criar("strong", "", tamanhoBonito(total)));
+        fila.appendChild(resumo);
+      }
+      pegar("btnMandar").disabled = arquivosEnvio.length === 0;
+    }
+    function escolherArquivos(lista) {
+      const grandes = Array.from(lista).filter(function (f) { return f.size > 2 * 1024 * 1024 * 1024; });
+      arquivosEnvio = arquivosEnvio.concat(Array.from(lista).filter(function (f) { return f.size <= 2 * 1024 * 1024 * 1024; }));
+      pegar("avisoEnvio").textContent = grandes.length ? "Arquivo acima de 2 GB não dá pra enviar: " + grandes[0].name : "";
+      pegar("btnVerEnviados").classList.add("escondido");
+      desenharFilaEnvio();
+    }
+    function enviarUm(arquivo, caminho, aoProgredir) {
+      return new Promise(function (resolver, rejeitar) {
+        const form = new FormData();
+        form.append("caminho", caminho);
+        form.append("arquivo", arquivo);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", enderecoServidor + "/api/arquivos/enviar");
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
+        xhr.upload.onprogress = function (e) { if (e.lengthComputable) aoProgredir(e.loaded); };
+        xhr.onload = function () {
+          let dados = {};
+          try { dados = JSON.parse(xhr.responseText); } catch (erro) { /* sem corpo */ }
+          if (xhr.status >= 200 && xhr.status < 300) resolver(dados);
+          else rejeitar(new Error(dados.erro || "Erro " + xhr.status));
+        };
+        xhr.onerror = function () { rejeitar(new Error("A conexão caiu durante o envio.")); };
+        xhr.send(form);
+      });
+    }
+    pegar("btnAbrirEnviar").addEventListener("click", function () { mostrarAba("enviar"); });
+    pegar("btnEnviarPara").addEventListener("click", function () { mostrarAba("enviar"); });
+    pegar("areaSoltar").addEventListener("click", function () { pegar("campoEnviar").click(); });
+    pegar("campoEnviar").addEventListener("change", function () {
+      escolherArquivos(pegar("campoEnviar").files);
+      pegar("campoEnviar").value = "";
+    });
+    ["dragenter", "dragover"].forEach(function (ev) {
+      pegar("areaSoltar").addEventListener(ev, function (e) { e.preventDefault(); pegar("areaSoltar").classList.add("sobre"); });
+    });
+    ["dragleave", "drop"].forEach(function (ev) {
+      pegar("areaSoltar").addEventListener(ev, function (e) { e.preventDefault(); pegar("areaSoltar").classList.remove("sobre"); });
+    });
+    pegar("areaSoltar").addEventListener("drop", function (e) { if (e.dataTransfer.files.length) escolherArquivos(e.dataTransfer.files); });
+    pegar("btnMandar").addEventListener("click", async function () {
+      const botao = pegar("btnMandar");
+      botao.disabled = true;
+      pegar("avisoEnvio").textContent = "";
+      pegar("progressoEnvio").classList.remove("escondido");
+      const total = arquivosEnvio.reduce(function (s, f) { return s + f.size; }, 0) || 1;
+      let feito = 0;
+      const enviados = [];
+      try {
+        const prep = await postar("/api/enviar/preparar", { para: destinoEnvio });
+        caminhoEnviado = prep.caminho;
+        for (let i = 0; i < arquivosEnvio.length; i++) {
+          const f = arquivosEnvio[i];
+          pegar("textoProgresso").textContent = "Enviando " + (i + 1) + " de " + arquivosEnvio.length + ": " + f.name;
+          const r = await enviarUm(f, caminhoEnviado, function (carregado) {
+            pegar("barraEnvio").style.width = Math.min(100, ((feito + carregado) / total) * 100) + "%";
+          });
+          feito += f.size;
+          enviados.push(r.nome || f.name);
+        }
+        pegar("barraEnvio").style.width = "100%";
+        await postar("/api/enviar/aviso", { para: destinoEnvio, nomes: enviados });
+        const alvo = document.querySelector(".destino.marcado");
+        pegar("textoProgresso").textContent = "";
+        pegar("avisoEnvio").textContent = "Pronto! " + enviados.length + (enviados.length === 1 ? " arquivo enviado" : " arquivos enviados")
+          + " para " + (alvo ? alvo.dataset.nome : "a pasta da casa") + ".";
+        pegar("btnVerEnviados").classList.remove("escondido");
+        arquivosEnvio = [];
+        desenharFilaEnvio();
+      } catch (erro) {
+        pegar("avisoEnvio").textContent = "Parou no meio: " + erro.message + (enviados.length ? " (" + enviados.length + " já foram)" : "");
+        arquivosEnvio = arquivosEnvio.slice(enviados.length);
+        desenharFilaEnvio();
+      }
+      setTimeout(function () { pegar("progressoEnvio").classList.add("escondido"); pegar("barraEnvio").style.width = "0"; }, 1500);
+    });
+    pegar("btnVerEnviados").addEventListener("click", function () {
+      pastaAtual = caminhoEnviado;
+      mostrarAba("arquivos");
+    });
+
     // ---------- Notificações (sininho) ----------
-    const ICONE_AVISO = { conta: "👤", servidor: "🖥️", atualizacao: "🔄", falha: "⚠️", seguranca: "🔒", info: "🔔" };
+    const ICONE_AVISO = { arquivo: "📤", conta: "👤", servidor: "🖥️", atualizacao: "🔄", falha: "⚠️", seguranca: "🔒", info: "🔔" };
     let avisos = [];
     let ultimoContadorAvisos = -1;
     function tempoAtras(t) {
@@ -1749,7 +1941,10 @@
         item.appendChild(texto);
         item.addEventListener("click", async function () {
           pegar("painelAvisos").classList.add("escondido");
-          if (n.link && SECOES[n.link]) mostrarAba(n.link);
+          if (n.link && n.link.indexOf("arquivos:") === 0) {
+            pastaAtual = n.link.slice(9);
+            mostrarAba("arquivos");
+          } else if (n.link && SECOES[n.link]) mostrarAba(n.link);
           if (!n.lida) {
             try { await postar("/api/notificacoes/lidas", { ids: [n.id] }); } catch (erro) { /* tenta depois */ }
             carregarAvisos();

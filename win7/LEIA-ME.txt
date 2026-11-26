@@ -1,0 +1,41 @@
+﻿CASA CONECTADA - pacote para Windows 7 (64 bits)
+=================================================
+
+COMO INSTALAR
+1) Descompacte este .zip (botão direito > Extrair tudo).
+2) Dê dois cliques em INSTALAR.bat e clique em "Sim" quando o Windows pedir.
+3) Pronto: na Área de Trabalho aparecem "CASA CONECTADA" e "ACHAR TVs".
+   Depois de instalado, pode apagar a pasta descompactada.
+
+O que o instalador faz:
+- Copia o site para C:\Users\<você>\CasaConectadaApp (com Python 3.8 portátil
+  e o Flask já incluídos: não precisa de internet nem instalar Python).
+- Copia os usuários e aparelhos do PC principal para C:\Users\<você>\CasaConectada
+  (só se essa pasta ainda não tiver dados). O login é o mesmo: jotav.
+- Libera a porta 5000 no firewall.
+
+USAR
+- Dois cliques em CASA CONECTADA na Área de Trabalho e deixe a janela aberta.
+- Nos celulares (mesmo Wi-Fi): o endereço que aparece na janela, tipo
+  http://192.168.0.X:5000
+- No próprio notebook, use o Chrome (o Internet Explorer não abre o site).
+
+ATUALIZAÇÕES AUTOMÁTICAS
+- Este notebook confere o PC principal a cada 10 minutos. Se tiver versão nova,
+  baixa, instala e religa sozinho (a janela preta reinicia). Veja na aba Atualizações.
+- Só o programa é atualizado: usuários, aparelhos e cenas ficam como estão.
+- Se der problema, a versão anterior fica guardada em CasaConectadaApp\backups.
+
+ATENÇÃO
+- Não deixe o servidor ligado no PC principal e no notebook ao mesmo tempo:
+  os horários automáticos rodariam duas vezes.
+- A rede do notebook tem que ser "Rede doméstica" ou "Rede de trabalho".
+- A chave da IA NÃO vem no pacote (por segurança). Se quiser o assistente,
+  cole a chave em C:\Users\<você>\CasaConectada\chave_anthropic.txt
+- A primeira vez que uma TV for usada a partir do notebook, ela pede para
+  "permitir a depuração" na tela: aceite e marque "sempre permitir".
+
+SE DER ERRO
+- "Falta atualização" ou o Python não abre: rode o Windows Update
+  (Windows 7 SP1 + KB2533623 + KB2999226) e rode o INSTALAR.bat de novo.
+- Tire um print da janela preta e mande pro Claude.

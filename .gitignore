@@ -1,0 +1,38 @@
+# Dados e segredos (ficam em C:\Users\<você>\CasaConectada, mas por garantia)
+segredo.key
+usuarios.json
+usuarios_apagados.json
+dispositivos.json
+cenas.json
+agendas.json
+notificacoes.json
+historico.jsonl
+email.json
+chave_anthropic.txt
+atualizacao.json
+apagados_listas.json
+versao.txt
+versao_sha.txt
+atualizacoes/
+capas/
+fotos/
+compartilhado/
+backups/
+
+# Cópias antigas e arquivos de trabalho
+*.antes-*
+*.antigo.*
+log-servidor.txt
+tvs-encontradas.txt
+*.zip
+
+# Python e editores
+.venv/
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+
+# Pacote do Windows 7 montado (gerado pelo montar_pacote.py)
+win7/CasaConectada-Win7/

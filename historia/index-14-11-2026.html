@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casa Conectada</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #14213D; color: white; font-family: sans-serif; }
+    h1, h2, h3, p { margin-top: 0; }
+    button { background: #FFD23F; color: #14213D; border: none; border-radius: 8px; padding: 10px 16px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    button:hover { background: #FF5D8F; }
+    .cinza { background: #3A4B73; color: white; }
+    input, select { width: 100%; padding: 11px; margin-bottom: 12px; border-radius: 8px; border: none; font-size: 15px; }
+    .escondido { display: none; }
+    .detalhe { color: #AEB9D6; font-size: 14px; margin-bottom: 0; }
+
+    /* Login */
+    .login { max-width: 380px; margin: 12vh auto; background: #1D2D50; padding: 28px; border-radius: 14px; }
+    .login h1 { color: #FFD23F; }
+
+    /* Barra do topo */
+    .barra { background: #1D2D50; border-bottom: 3px solid #FFD23F; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .barra h1 { margin: 0; font-size: 22px; color: #FFD23F; }
+    .direita { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: #FF5D8F; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .quem { display: flex; align-items: center; gap: 8px; }
+
+    /* Bolinha de status */
+    .pilula { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: #14213D; font-size: 14px; }
+    .ponto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #8A96B5; flex-shrink: 0; }
+    .ponto.on { background: #3DDC84; }
+    .ponto.off { background: #FF5D5D; }
+
+    /* Página em 2 colunas */
+    .pagina { max-width: 1100px; margin: 0 auto; padding: 28px 24px; display: grid; grid-template-columns: 1fr 300px; gap: 28px; align-items: start; }
+    @media (max-width: 800px) { .pagina { grid-template-columns: 1fr; } }
+    .titulo-secao { color: #FFD23F; font-size: 26px; border-top: 1px solid #3A4B73; padding-top: 16px; margin-bottom: 20px; }
+
+    /* Formulário de adicionar */
+    .painel { background: #1D2D50; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+    .painel h3 { color: #FFD23F; }
+    .linha-botoes { display: flex; gap: 10px; }
+
+    /* Cards dos dispositivos */
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+    .card { background: #1D2D50; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .banner { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 52px; }
+    .banner.tv { background: #2F5DA8; }
+    .banner.notebook { background: #2E8B6E; }
+    .banner.celular { background: #B8456B; }
+    .banner.outro { background: #6B5BA8; }
+    .corpo { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .corpo h3 { margin: 0; font-size: 18px; }
+    .corpo button { margin-top: auto; }
+    .remover { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; padding: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.45); color: white; }
+    .remover:hover { background: #FF5D5D; }
+    .card.novo { border: 2px dashed #3A4B73; background: transparent; color: #FFD23F; font-size: 17px; min-height: 200px; align-items: center; justify-content: center; }
+    .card.novo:hover { background: #1D2D50; }
+
+    /* Controle remoto */
+    .controle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 360px; margin-bottom: 16px; }
+    .controle button { padding: 16px 0; }
+    #aviso { min-height: 24px; color: #FFD23F; }
+
+    /* Coluna do lado */
+    .lateral { background: #1D2D50; border-radius: 12px; padding: 18px; }
+    .lateral h2 { color: #FFD23F; font-size: 20px; }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="telaLogin" class="login">
+    <h1>Casa Conectada</h1>
+    <input id="campoUsuario" placeholder="Usuário" autocomplete="off">
+    <input id="campoSenha" type="password" placeholder="Senha" autocomplete="new-password">
+    <button id="btnEntrar">Entrar</button>
+    <p id="erroLogin" style="margin-top:12px"></p>
+    <p class="detalhe">Teste: usuário admin, senha 1234</p>
+  </div>
+
+  <!-- TELA PRINCIPAL -->
+  <div id="telaApp" class="escondido">
+
+    <div class="barra">
+      <h1>Casa Conectada</h1>
+      <div class="direita">
+        <span class="pilula" id="pilulaTopo"><span class="ponto"></span><span class="texto">Verificando...</span></span>
+        <span class="quem"><span class="avatar" id="avatar">A</span><span id="nomeUsuario">admin</span></span>
+        <button id="btnSair" class="cinza">Sair</button>
+      </div>
+    </div>
+
+    <div class="pagina">
+
+      <main>
+        <!-- Lista de dispositivos -->
+        <section id="secDispositivos">
+          <h2 class="titulo-secao">Meus dispositivos</h2>
+
+          <div id="formAdd" class="painel escondido">
+            <h3>Novo dispositivo</h3>
+            <input id="nomeNovo" placeholder="Nome (ex: TV da sala)">
+            <input id="ipNovo" placeholder="IP (ex: 192.168.0.20)">
+            <select id="tipoNovo">
+              <option value="tv">TV</option>
+              <option value="notebook">Notebook</option>
+              <option value="celular">Celular</option>
+              <option value="outro">Outro</option>
+            </select>
+            <div class="linha-botoes">
+              <button id="btnSalvarAdd">Salvar</button>
+              <button id="btnCancelarAdd" class="cinza">Cancelar</button>
+            </div>
+          </div>
+
+          <div id="grade" class="grade"></div>
+        </section>
+
+        <!-- Controle remoto -->
+        <section id="secControle" class="escondido">
+          <h2 class="titulo-secao" id="tituloControle">Controle</h2>
+          <div class="controle">
+            <button data-cmd="BACK">Voltar</button>
+            <button data-cmd="DPAD_UP">↑</button>
+            <button data-cmd="HOME">Início</button>
+            <button data-cmd="DPAD_LEFT">←</button>
+            <button data-cmd="DPAD_CENTER">OK</button>
+            <button data-cmd="DPAD_RIGHT">→</button>
+            <button data-cmd="VOLUME_DOWN">Vol −</button>
+            <button data-cmd="DPAD_DOWN">↓</button>
+            <button data-cmd="VOLUME_UP">Vol +</button>
+            <div></div>
+            <button data-cmd="POWER">Ligar</button>
+            <div></div>
+          </div>
+          <p id="aviso"></p>
+          <button id="btnVoltar" class="cinza">← Voltar aos dispositivos</button>
+        </section>
+      </main>
+
+      <aside class="lateral">
+        <h2>Servidor</h2>
+        <p><span class="pilula" id="pilulaLado"><span class="ponto"></span><span class="texto">Verificando...</span></span></p>
+        <p class="detalhe" id="horaCheck" style="margin-bottom:16px">Última checagem: -</p>
+        <input id="enderecoServidor" placeholder="http://localhost:5000">
+        <button id="btnSalvarServidor">Salvar endereço</button>
+      </aside>
+
+    </div>
+  </div>
+
+  <script>
+    // LOGIN TEMPORÁRIO, só pro visual. Não é seguro.
+    // O login de verdade vai ser feito no servidor em Python.
+    const LOGIN_USUARIO = "admin";
+    const LOGIN_SENHA = "1234";
+
+    const ICONES = { tv: "📺", notebook: "💻", celular: "📱", outro: "🔌" };
+    const NOMES_TIPO = { tv: "TV", notebook: "Notebook", celular: "Celular", outro: "Outro" };
+
+    let aparelhos = JSON.parse(localStorage.getItem("aparelhos") || "[]");
+    let enderecoServidor = localStorage.getItem("servidor") || "http://localhost:5000";
+    let atual = null; // aparelho que está sendo controlado
+
+    function pegar(id) { return document.getElementById(id); }
+
+    // Cria um elemento HTML já com classe e texto
+    function criar(tag, classe, texto) {
+      const e = document.createElement(tag);
+      if (classe) e.className = classe;
+      if (texto !== undefined) e.textContent = texto;
+      return e;
+    }
+
+    function salvar() {
+      localStorage.setItem("aparelhos", JSON.stringify(aparelhos));
+    }
+
+    // ---------- Cards dos dispositivos ----------
+    function mostrarLista() {
+      const grade = pegar("grade");
+      grade.innerHTML = "";
+
+      aparelhos.forEach(function (a, posicao) {
+        const tipo = a.tipo || "outro";
+
+        const card = criar("div", "card");
+        const banner = criar("div", "banner " + tipo, ICONES[tipo]);
+
+        const corpo = criar("div", "corpo");
+        corpo.appendChild(criar("h3", "", a.nome));
+        corpo.appendChild(criar("p", "detalhe", NOMES_TIPO[tipo] + " · " + a.ip));
+
+        const linhaStatus = criar("p", "detalhe");
+        linhaStatus.appendChild(criar("span", "ponto"));
+        linhaStatus.appendChild(document.createTextNode(" Status: aguardando servidor"));
+        corpo.appendChild(linhaStatus);
+
+        const btnControlar = criar("button", "", "Controlar »");
+        btnControlar.addEventListener("click", function () {
+          atual = a;
+          pegar("tituloControle").textContent = "Controle: " + a.nome;
+          pegar("aviso").textContent = "";
+          pegar("secDispositivos").classList.add("escondido");
+          pegar("secControle").classList.remove("escondido");
+        });
+        corpo.appendChild(btnControlar);
+
+        const btnRemover = criar("button", "remover", "×");
+        btnRemover.addEventListener("click", function () {
+          aparelhos.splice(posicao, 1);
+          salvar();
+          mostrarLista();
+        });
+
+        card.appendChild(banner);
+        card.appendChild(corpo);
+        card.appendChild(btnRemover);
+        grade.appendChild(card);
+      });
+
+      // Último card: botão de adicionar
+      const novo = criar("button", "card novo", "+ Adicionar dispositivo");
+      novo.addEventListener("click", function () {
+        pegar("formAdd").classList.remove("escondido");
+        pegar("nomeNovo").focus();
+      });
+      grade.appendChild(novo);
+    }
+
+    // ---------- Adicionar dispositivo ----------
+    pegar("btnSalvarAdd").addEventListener("click", function () {
+      const nome = pegar("nomeNovo").value.trim();
+      const ip = pegar("ipNovo").value.trim();
+      const tipo = pegar("tipoNovo").value;
+      if (nome === "" || ip === "") return;
+      aparelhos.push({ nome: nome, ip: ip, tipo: tipo });
+      salvar();
+      pegar("nomeNovo").value = "";
+      pegar("ipNovo").value = "";
+      pegar("formAdd").classList.add("escondido");
+      mostrarLista();
+    });
+
+    pegar("btnCancelarAdd").addEventListener("click", function () {
+      pegar("formAdd").classList.add("escondido");
+    });
+
+    // ---------- Status do servidor ----------
+    function atualizarPilula(id, online) {
+      const p = pegar(id);
+      p.querySelector(".ponto").className = "ponto " + (online ? "on" : "off");
+      p.querySelector(".texto").textContent = online ? "Servidor conectado" : "Servidor desconectado";
+    }
+
+    async function verificarServidor() {
+      let online = false;
+      try {
+        const controle = new AbortController();
+        const timer = setTimeout(function () { controle.abort(); }, 2500);
+        const resposta = await fetch(enderecoServidor + "/status", { signal: controle.signal, cache: "no-store" });
+        clearTimeout(timer);
+        online = resposta.ok;
+      } catch (erro) {
+        online = false;
+      }
+      atualizarPilula("pilulaTopo", online);
+      atualizarPilula("pilulaLado", online);
+      pegar("horaCheck").textContent = "Última checagem: " + new Date().toLocaleTimeString("pt-BR");
+    }
+
+    pegar("enderecoServidor").value = enderecoServidor;
+    pegar("btnSalvarServidor").addEventListener("click", function () {
+      enderecoServidor = pegar("enderecoServidor").value.trim().replace(/\/$/, "");
+      localStorage.setItem("servidor", enderecoServidor);
+      verificarServidor();
+    });
+
+    verificarServidor();
+    setInterval(verificarServidor, 5000); // checa de novo a cada 5 segundos
+
+    // ---------- Controle remoto ----------
+    async function enviar(comando) {
+      const aviso = pegar("aviso");
+      aviso.textContent = "Enviando...";
+      try {
+        const resposta = await fetch(enderecoServidor + "/comando", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ip: atual.ip, comando: comando })
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) {
+          aviso.textContent = "O servidor respondeu com erro: " + dados.erro;
+          return;
+        }
+        aviso.textContent = "Comando " + comando + " enviado para " + atual.nome;
+      } catch (erro) {
+        aviso.textContent = "Não consegui falar com o servidor. Ele está ligado?";
+      }
+    }
+
+    document.querySelectorAll("[data-cmd]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        enviar(b.getAttribute("data-cmd"));
+      });
+    });
+
+    pegar("btnVoltar").addEventListener("click", function () {
+      pegar("secControle").classList.add("escondido");
+      pegar("secDispositivos").classList.remove("escondido");
+    });
+
+    // ---------- Login e sair ----------
+    function entrar() {
+      const usuario = pegar("campoUsuario").value.trim().toLowerCase();
+      const senha = pegar("campoSenha").value.trim();
+      if (usuario === LOGIN_USUARIO && senha === LOGIN_SENHA) {
+        pegar("erroLogin").textContent = "";
+        pegar("nomeUsuario").textContent = usuario;
+        pegar("avatar").textContent = usuario.charAt(0).toUpperCase();
+        pegar("telaLogin").classList.add("escondido");
+        pegar("telaApp").classList.remove("escondido");
+        mostrarLista();
+      } else {
+        pegar("erroLogin").textContent = "Usuário ou senha errados.";
+      }
+    }
+    pegar("btnEntrar").addEventListener("click", entrar);
+    pegar("campoSenha").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") entrar();
+    });
+
+    pegar("btnSair").addEventListener("click", function () {
+      pegar("telaApp").classList.add("escondido");
+      pegar("telaLogin").classList.remove("escondido");
+      pegar("campoSenha").value = "";
+    });
+  </script>
+</body>
+</html>

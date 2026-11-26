@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casa Conectada · controle a casa pelo navegador</title>
+  <meta name="description" content="Site que roda no computador de casa e controla as TVs e aparelhos pela rede, de qualquer celular ou notebook do Wi-Fi.">
+  <link rel="icon" href="img/icone.png">
+  <style>
+    * { box-sizing: border-box; }
+    html { background: #0F1A33; }
+    body { margin: 0; color: white; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.55;
+           background: radial-gradient(circle at 50% -10%, #22386B 0%, #0F1A33 50%) no-repeat; }
+    a { color: #FFD23F; }
+    .centro { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+    header { padding: 22px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    header strong { color: #FFD23F; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+    header img { width: 34px; height: 34px; border-radius: 9px; }
+    .botao { display: inline-block; background: #FFD23F; color: #14213D; padding: 12px 20px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+    .botao.vazado { background: transparent; color: white; border: 1px solid #2B3D6B; }
+    .hero { text-align: center; padding: 56px 0 30px; }
+    .hero h1 { font-size: clamp(34px, 6vw, 58px); line-height: 1.1; margin: 0 0 16px; }
+    .hero h1 span { color: #FFD23F; }
+    .hero p { color: #AEB9D6; font-size: 19px; max-width: 640px; margin: 0 auto 28px; }
+    .hero .acoes { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .print { margin: 40px auto 0; border-radius: 16px; border: 1px solid #22325A; box-shadow: 0 24px 70px rgba(0,0,0,.55); width: 100%; display: block; }
+    section { padding: 56px 0; }
+    h2 { font-size: 30px; margin: 0 0 8px; }
+    .sub { color: #AEB9D6; margin: 0 0 30px; }
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .cartao { background: #1A2747; border: 1px solid #22325A; border-radius: 16px; padding: 22px; }
+    .cartao .ico { font-size: 30px; }
+    .cartao h3 { margin: 10px 0 6px; font-size: 18px; }
+    .cartao p { margin: 0; color: #AEB9D6; font-size: 15px; }
+    .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .lado figure { margin: 0; }
+    .lado img { width: 100%; border-radius: 14px; border: 1px solid #22325A; }
+    figcaption { color: #AEB9D6; font-size: 14px; margin-top: 8px; text-align: center; }
+    .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 26px; }
+    .numero { background: #1A2747; border-radius: 16px; padding: 20px; text-align: center; border: 1px solid #22325A; }
+    .numero strong { display: block; font-size: 34px; color: #FFD23F; }
+    .numero span { color: #AEB9D6; font-size: 14px; }
+    .celular { display: grid; grid-template-columns: 300px 1fr; gap: 34px; align-items: center; }
+    .celular img { width: 100%; border-radius: 28px; border: 1px solid #22325A; }
+    ul.lista { padding-left: 20px; color: #D6DDF0; }
+    ul.lista li { margin-bottom: 8px; }
+    pre { background: #1A2747; border: 1px solid #22325A; border-radius: 14px; padding: 18px; overflow-x: auto; color: #D6DDF0; font-size: 14px; }
+    footer { padding: 40px 0 60px; color: #8A96B5; text-align: center; font-size: 14px; }
+    @media (max-width: 760px) { .lado, .celular { grid-template-columns: 1fr; } .celular img { max-width: 300px; margin: 0 auto; display: block; } }
+  </style>
+</head>
+<body>
+  <div class="centro">
+    <header>
+      <strong><img src="img/icone.png" alt="">Casa Conectada</strong>
+      <a class="botao vazado" href="https://github.com/joaovitor6002/casa-conectada">Ver no GitHub</a>
+    </header>
+
+    <div class="hero">
+      <h1>A casa toda no <span>navegador</span></h1>
+      <p>Um site que roda no computador de casa e controla as TVs e aparelhos pela rede, de qualquer celular ou notebook do Wi-Fi. Sem app pra instalar e sem mensalidade.</p>
+      <div class="acoes">
+        <a class="botao" href="https://github.com/joaovitor6002/casa-conectada">Código no GitHub</a>
+        <a class="botao vazado" href="#antes-depois">Antes e depois</a>
+      </div>
+      <img class="print" src="img/inicio-pc.png" alt="Tela inicial do Casa Conectada">
+    </div>
+
+    <section>
+      <h2>O que ele faz</h2>
+      <p class="sub">Começou como um controle remoto. Virou a central da casa.</p>
+      <div class="grade">
+        <div class="cartao"><div class="ico">📺</div><h3>Controle das TVs</h3><p>Controle remoto completo pela rede, abrir apps, digitar, mostrar mensagens e ligar a TV desligada.</p></div>
+        <div class="cartao"><div class="ico">🔍</div><h3>Acha as TVs sozinho</h3><p>Procura na rede, reconhece cada TV pelo número de série e corrige o IP de quem mudou.</p></div>
+        <div class="cartao"><div class="ico">✨</div><h3>Cenas e horários</h3><p>"Boa noite", "Modo cinema": vários passos num toque, ou sozinhos na hora marcada.</p></div>
+        <div class="cartao"><div class="ico">👥</div><h3>Contas da família</h3><p>Administrador e usuário comum, foto de perfil, cadastro com aprovação e senha recuperada por e-mail.</p></div>
+        <div class="cartao"><div class="ico">🔄</div><h3>Vários servidores</h3><p>Roda em mais de um computador, até num notebook com Windows 7. Eles se atualizam e sincronizam sozinhos.</p></div>
+        <div class="cartao"><div class="ico">🔔</div><h3>Notificações</h3><p>Conta pra aprovar, servidor que caiu, atualização instalada, tentativa estranha de login.</p></div>
+        <div class="cartao"><div class="ico">📁</div><h3>Arquivos da casa</h3><p>Uma pasta compartilhada pra enviar e baixar arquivos de qualquer aparelho.</p></div>
+        <div class="cartao"><div class="ico">🤖</div><h3>Assistente de IA</h3><p>Converse com a casa: "desliga a TV da sala". Pronto no código, esperando a chave da API.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="celular">
+        <img src="img/inicio-celular.png" alt="Casa Conectada no celular">
+        <div>
+          <h2>Feito pro celular</h2>
+          <p class="sub">No celular, o menu vira uma barra embaixo, igual a um app, e dá pra adicionar o site à tela de início.</p>
+          <ul class="lista">
+            <li>Saudação, cenas rápidas e aparelhos logo na primeira tela</li>
+            <li>Volume, mudo e desligar direto no card de cada aparelho</li>
+            <li>Barra "Fale com a casa…" para o assistente</li>
+            <li>Sininho 🔔 com tudo o que acontece de importante</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="antes-depois">
+      <h2>Antes e depois</h2>
+      <p class="sub">A primeira versão é de 14/11/2026. Esta é de 26/11/2026, doze dias depois.</p>
+      <div class="lado">
+        <figure><img src="img/antes.png" alt="Primeira versão"><figcaption>14/11 · lista de aparelhos guardada no navegador</figcaption></figure>
+        <figure><img src="img/inicio-pc.png" alt="Versão atual"><figcaption>26/11 · central da casa com servidores sincronizados</figcaption></figure>
+      </div>
+      <div class="numeros">
+        <div class="numero"><strong>5.479</strong><span>linhas de código</span></div>
+        <div class="numero"><strong>37×</strong><span>maior, o servidor</span></div>
+        <div class="numero"><strong>65</strong><span>endereços na API (eram 2)</span></div>
+        <div class="numero"><strong>12</strong><span>dias de projeto</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Como funciona</h2>
+      <p class="sub">Python + Flask no servidor, HTML/CSS/JavaScript puros no site, ADB para falar com as TVs.</p>
+<pre>Celulares e notebooks (navegador)
+          │  Wi-Fi de casa
+          ▼
+PC principal ── servidor.py (Flask) ──► TVs Android (ADB pela rede, porta 5555)
+          ▲  sincronização cifrada + atualizações assinadas
+          ▼
+Notebook antigo (Windows 7) ── mesmo servidor, recebe as versões novas sozinho</pre>
+      <ul class="lista">
+        <li>O servidor só aceita a rede de casa; senhas guardadas com hash e login por token assinado.</li>
+        <li>Atualizações e sincronização assinadas com HMAC-SHA256, com uma chave que só os servidores da casa têm.</li>
+        <li>Os dados ficam fora da pasta do projeto, então nenhuma senha entra no Git.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Feito por <a href="https://github.com/joaovitor6002">João Vitor</a>, com a ajuda do Claude (Anthropic) na programação.
+    </footer>
+  </div>
+</body>
+</html>

@@ -254,8 +254,8 @@
   <div id="telaEsqueci" class="login escondido">
     <h1>Esqueci a senha</h1>
     <div id="esqPasso1">
-      <p class="detalhe" style="margin-bottom:12px">Digite seu usuário. Vamos mandar um código de 6 números para o e-mail cadastrado.</p>
-      <input id="esqUsuario" placeholder="Usuário" autocomplete="username">
+      <p class="detalhe" style="margin-bottom:12px">Digite seu usuário ou e-mail. Vamos mandar um código de 6 números para o e-mail cadastrado.</p>
+      <input id="esqUsuario" placeholder="Usuário ou e-mail" autocomplete="username">
       <button id="btnEsqEnviar">Enviar código</button>
     </div>
     <div id="esqPasso2" class="escondido">
@@ -1927,12 +1927,14 @@
       pegar("erroEsqueci").textContent = "";
       if (mostrar) pegar("esqUsuario").value = pegar("campoUsuario").value.trim();
     }
+    let usuarioRecuperando = "";  // o usuário de verdade, mesmo se a pessoa digitou o e-mail
     async function pedirCodigo() {
       const usuario = pegar("esqUsuario").value.trim().toLowerCase();
-      if (!usuario) { pegar("erroEsqueci").textContent = "Digite seu usuário."; return; }
+      if (!usuario) { pegar("erroEsqueci").textContent = "Digite seu usuário ou e-mail."; return; }
       pegar("erroEsqueci").textContent = "Enviando...";
       try {
         const r = await postar("/api/senha/esqueci", { usuario: usuario });
+        usuarioRecuperando = r.usuario || usuario;
         pegar("esqEnviadoPara").textContent = "Mandamos o código para " + r.para + ". Ele vale por 10 minutos (olhe também no spam).";
         pegar("esqPasso1").classList.add("escondido");
         pegar("esqPasso2").classList.remove("escondido");
@@ -1951,11 +1953,11 @@
       }
       try {
         await postar("/api/senha/redefinir", {
-          usuario: pegar("esqUsuario").value.trim().toLowerCase(),
+          usuario: usuarioRecuperando,
           codigo: pegar("esqCodigo").value.trim(),
           nova: pegar("esqNova").value
         });
-        const usuario = pegar("esqUsuario").value.trim();
+        const usuario = usuarioRecuperando;
         ["esqCodigo", "esqNova", "esqNova2"].forEach(function (id) { pegar(id).value = ""; });
         mostrarEsqueci(false);
         pegar("campoUsuario").value = usuario;

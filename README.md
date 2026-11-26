@@ -92,8 +92,8 @@ Notebook antigo (Windows 7) ── mesmo servidor, recebe as versões novas sozi
 
 ## Próximos passos
 
-- [ ] Ícone próprio do Casa Conectada
-- [ ] "Esqueci a senha" aceitando usuário ou e-mail
+- [x] Ícone próprio do Casa Conectada
+- [x] "Esqueci a senha" aceitando usuário ou e-mail
 - [ ] Enviar arquivos do celular para os notebooks pelo site (tipo LocalSend)
 - [ ] Controles próprios para cada tipo de aparelho: TV, celular, notebook e servidor
 - [ ] Aba "Servidores" com o estado de cada computador da casa

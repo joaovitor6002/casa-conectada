@@ -719,11 +719,18 @@ def senha_esqueci():
     ip = request.remote_addr
     if bloqueado_por_tentativas(ip):
         return jsonify({"erro": "Muitas tentativas. Espere 5 minutos."}), 429
-    usuario = str((request.get_json(silent=True) or {}).get("usuario", "")).strip().lower()
-    info = ler_usuarios().get(usuario)
+    digitado = str((request.get_json(silent=True) or {}).get("usuario", "")).strip().lower()
+    usuarios = ler_usuarios()
+    usuario = digitado
+    if "@" in digitado:  # aceita o e-mail no lugar do usuário
+        donos = [u for u, i in usuarios.items() if i.get("email", "").lower() == digitado]
+        if len(donos) > 1:
+            return jsonify({"erro": "Esse e-mail está em mais de uma conta. Digite o usuário."}), 400
+        usuario = donos[0] if donos else ""
+    info = usuarios.get(usuario)
     if not info:
         tentativas_login.setdefault(ip, []).append(time.time())
-        return jsonify({"erro": "Usuário não encontrado."}), 404
+        return jsonify({"erro": "Não achei nenhuma conta com esse usuário ou e-mail."}), 404
     if not info.get("email"):
         return jsonify({"erro": "Esse usuário não tem e-mail cadastrado. Peça ao administrador para trocar a senha."}), 400
     anterior = codigos_senha.get(usuario)
@@ -739,7 +746,7 @@ def senha_esqueci():
     codigos_senha[usuario] = {"hash": hash_codigo(usuario, codigo), "expira": time.time() + VALIDADE_CODIGO,
                               "tentativas": 0, "enviado": time.time()}
     registrar("site", usuario, "Pediu código para trocar a senha", True)
-    return jsonify({"ok": True, "para": mascarar_email(info["email"])})
+    return jsonify({"ok": True, "para": mascarar_email(info["email"]), "usuario": usuario})
 
 
 @app.route("/api/senha/redefinir", methods=["POST"])

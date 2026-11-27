@@ -274,7 +274,7 @@
   <!-- TELA DE LOGIN -->
   <div id="telaLogin" class="login">
     <img src="/icone-192.png" alt="" class="logo-login"><h1>Casa Conectada</h1>
-    <input id="campoUsuario" placeholder="Usuário" autocomplete="username">
+    <input id="campoUsuario" placeholder="Usuário, e-mail ou nome" autocomplete="username">
     <input id="campoSenha" type="password" placeholder="Senha" autocomplete="current-password">
     <button id="btnEntrar">Entrar</button>
     <button id="btnEsqueci" class="link" style="margin-left:14px">Esqueci minha senha</button>
@@ -299,8 +299,8 @@
   <div id="telaEsqueci" class="login escondido">
     <h1>Esqueci a senha</h1>
     <div id="esqPasso1">
-      <p class="detalhe" style="margin-bottom:12px">Digite seu usuário ou e-mail. Vamos mandar um código de 6 números para o e-mail cadastrado.</p>
-      <input id="esqUsuario" placeholder="Usuário ou e-mail" autocomplete="username">
+      <p class="detalhe" style="margin-bottom:12px">Digite seu usuário, e-mail ou nome. Vamos mandar um código de 6 números para o e-mail cadastrado.</p>
+      <input id="esqUsuario" placeholder="Usuário, e-mail ou nome" autocomplete="username">
       <button id="btnEsqEnviar">Enviar código</button>
     </div>
     <div id="esqPasso2" class="escondido">
@@ -870,7 +870,12 @@
       let dados = {};
       try { dados = await resposta.json(); } catch (erro) { /* sem corpo */ }
       if (resposta.status === 401 && caminho !== "/api/login") {
-        sair("Sua sessão acabou. Entre de novo.");
+        if (!pegar("telaApp").classList.contains("escondido")) {
+          sair("Sua sessão acabou. Entre de novo.");
+        } else {  // login antigo guardado no navegador: descarta em silêncio, sem apagar o que a pessoa digita
+          token = "";
+          sessionStorage.removeItem("token");
+        }
         throw new Error(dados.erro || "Sessão expirada");
       }
       if (!resposta.ok) throw new Error(dados.erro || "Erro " + resposta.status);
@@ -2388,9 +2393,14 @@
     });
 
     // Criar conta (fica pendente até o administrador aprovar)
+    // Só uma tela de entrada aparece por vez (login, criar conta ou esqueci a senha)
+    function telaDeEntrada(qual) {
+      ["telaLogin", "telaCadastro", "telaEsqueci"].forEach(function (id) {
+        pegar(id).classList.toggle("escondido", id !== qual);
+      });
+    }
     function mostrarCadastro(mostrar) {
-      pegar("telaLogin").classList.toggle("escondido", mostrar);
-      pegar("telaCadastro").classList.toggle("escondido", !mostrar);
+      telaDeEntrada(mostrar ? "telaCadastro" : "telaLogin");
       pegar("erroCadastro").textContent = "";
     }
     pegar("btnCriarConta").addEventListener("click", function () { mostrarCadastro(true); });
@@ -2429,8 +2439,7 @@
     });
 
     function mostrarEsqueci(mostrar) {
-      pegar("telaLogin").classList.toggle("escondido", mostrar);
-      pegar("telaEsqueci").classList.toggle("escondido", !mostrar);
+      telaDeEntrada(mostrar ? "telaEsqueci" : "telaLogin");
       pegar("esqPasso1").classList.remove("escondido");
       pegar("esqPasso2").classList.add("escondido");
       pegar("erroEsqueci").textContent = "";
@@ -2732,7 +2741,7 @@
       document.body.classList.toggle("nao-admin", meuPapel !== "admin");
       mostrarPerfilTopo(nome, fotoV);
       carregarAvisos();
-      pegar("telaLogin").classList.add("escondido");
+      telaDeEntrada(null);
       pegar("telaApp").classList.remove("escondido");
       mostrarAba("dispositivos");
       if (meuPapel === "admin") await migrarAntigos();
@@ -2775,7 +2784,7 @@
       ultimoStatus = {};
       mostrarAba("dispositivos");
       pegar("telaApp").classList.add("escondido");
-      pegar("telaLogin").classList.remove("escondido");
+      telaDeEntrada("telaLogin");
       pegar("campoSenha").value = "";
       pegar("erroLogin").textContent = typeof mensagem === "string" ? mensagem : "";
     }

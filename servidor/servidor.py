@@ -482,6 +482,31 @@ def status():
 
 
 # ---------- Login ----------
+def sem_acento(texto):
+    return "".join(c for c in unicodedata.normalize("NFKD", str(texto)) if not unicodedata.combining(c)).casefold().strip()
+
+
+def achar_conta(digitado, usuarios=None):
+    """Acha a conta pelo usuário de entrada, pelo e-mail ou pelo nome de exibição.
+    Devolve (usuario, erro). Nome repetido em mais de uma conta não vale."""
+    usuarios = usuarios if usuarios is not None else ler_usuarios()
+    bruto = re.sub(r"\s+", " ", str(digitado or "")).strip()
+    if bruto.lower() in usuarios:
+        return bruto.lower(), ""
+    if "@" in bruto:
+        donos = [u for u, i in usuarios.items() if i.get("email", "").lower() == bruto.lower()]
+        if len(donos) > 1:
+            return "", "Esse e-mail está em mais de uma conta. Digite o usuário."
+        return (donos[0], "") if donos else ("", "")
+    chave = sem_acento(bruto)
+    if not chave:
+        return "", ""
+    donos = [u for u, i in usuarios.items() if i.get("nome") and sem_acento(i["nome"]) == chave]
+    if len(donos) > 1:
+        return "", "Tem mais de uma pessoa com esse nome. Entre com o seu usuário."
+    return (donos[0], "") if donos else ("", "")
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
     ip = request.remote_addr
@@ -489,10 +514,13 @@ def login():
         return jsonify({"erro": "Muitas tentativas. Espere 5 minutos."}), 429
 
     dados = request.get_json(silent=True) or {}
-    usuario = str(dados.get("usuario", "")).strip().lower()
     senha = str(dados.get("senha", ""))
+    usuarios = ler_usuarios()
+    usuario, aviso = achar_conta(dados.get("usuario", ""), usuarios)
+    if aviso:
+        return jsonify({"erro": aviso}), 400
 
-    info = ler_usuarios().get(usuario)
+    info = usuarios.get(usuario)
     hash_salvo = info["hash"] if info else None
     # Confere sempre uma senha, mesmo se o usuário não existe (evita pistas)
     senha_ok = check_password_hash(hash_salvo or HASH_FALSO, senha)
@@ -720,14 +748,10 @@ def senha_esqueci():
     ip = request.remote_addr
     if bloqueado_por_tentativas(ip):
         return jsonify({"erro": "Muitas tentativas. Espere 5 minutos."}), 429
-    digitado = str((request.get_json(silent=True) or {}).get("usuario", "")).strip().lower()
     usuarios = ler_usuarios()
-    usuario = digitado
-    if "@" in digitado:  # aceita o e-mail no lugar do usuário
-        donos = [u for u, i in usuarios.items() if i.get("email", "").lower() == digitado]
-        if len(donos) > 1:
-            return jsonify({"erro": "Esse e-mail está em mais de uma conta. Digite o usuário."}), 400
-        usuario = donos[0] if donos else ""
+    usuario, aviso = achar_conta((request.get_json(silent=True) or {}).get("usuario", ""), usuarios)
+    if aviso:
+        return jsonify({"erro": aviso}), 400
     info = usuarios.get(usuario)
     if not info:
         tentativas_login.setdefault(ip, []).append(time.time())
